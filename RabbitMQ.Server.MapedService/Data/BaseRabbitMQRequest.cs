@@ -1,0 +1,34 @@
+﻿using RabbitMQ.Client.Events;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
+namespace RabbitMQ.Server.MapedService.Data
+{
+    public sealed class BaseRabbitMQRequest
+    {
+        private readonly JsonSerializerOptions serializerOptions = new()
+        {
+            Converters = { new JsonStringEnumConverter() },
+            WriteIndented = false,
+            ReadCommentHandling = JsonCommentHandling.Skip,
+            AllowTrailingCommas = true,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+        };
+        public RabbitMQRequestData RequestData { get; }
+        public BaseRabbitMQRequest(BasicDeliverEventArgs eventArgs)
+        {
+            if (eventArgs is null)
+            {
+                throw new ArgumentNullException(nameof(eventArgs));
+            }
+
+            byte[] request = eventArgs.Body.ToArray();
+            RabbitMQRequestData? data = JsonSerializer.Deserialize<RabbitMQRequestData>(request, serializerOptions);
+            if (data is null)
+            {
+                throw new ArgumentException(nameof(data));
+            }
+            RequestData = data;
+        }
+    }
+}
