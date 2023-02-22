@@ -1,18 +1,18 @@
 # EBCEYS.RabbitMQ
 
-## Описание
+## РћРїРёСЃР°РЅРёРµ
 
-Библиотека для работы с брокером сообщений RabbitMQ.
+Р‘РёР±Р»РёРѕС‚РµРєР° РґР»СЏ СЂР°Р±РѕС‚С‹ СЃ Р±СЂРѕРєРµСЂРѕРј СЃРѕРѕР±С‰РµРЅРёР№ RabbitMQ.
 
 ### RabbitMQ.Server.Service
 
-Реализация consumer-a как IHostedService.
+Р РµР°Р»РёР·Р°С†РёСЏ consumer-a РєР°Рє IHostedService.
 
 ### RabbitMQ.Server.MapedService
 
-Попытка реализации сервиса consumer-a через контроллеры (а-ля ControllerBase для http).
+РџРѕРїС‹С‚РєР° СЂРµР°Р»РёР·Р°С†РёРё СЃРµСЂРІРёСЃР° consumer-a С‡РµСЂРµР· РєРѕРЅС‚СЂРѕР»Р»РµСЂС‹ (Р°-Р»СЏ ControllerBase РґР»СЏ http).
 
-### Запрос для обработки
+### Р—Р°РїСЂРѕСЃ РґР»СЏ РѕР±СЂР°Р±РѕС‚РєРё
 ```json
 public class RabbitMQRequestData
     {
