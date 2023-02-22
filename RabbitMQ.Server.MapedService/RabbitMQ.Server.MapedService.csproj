@@ -4,6 +4,12 @@
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Title>EBCEYS.RabbitMQ</Title>
+    <Description>Библиотека для работы с брокером сообщений RabbitMQ</Description>
+    <PackageProjectUrl>https://github.com/EBCEYS/EBCEYS.RabbitMQ</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/EBCEYS/EBCEYS.RabbitMQ</RepositoryUrl>
+    <PackageTags>rabbitmq</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
