@@ -5,19 +5,13 @@ VisualStudioVersion = 17.4.33403.182
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Server", "Server", "{176B2B19-8F90-456C-9B19-5FB3E5C94A57}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RabbitMQ.Server.Service", "RabbitMQServerService\RabbitMQ.Server.Service.csproj", "{27C49038-8424-4321-81FC-C1296E5DC0BE}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Configuration", "Configuration", "{0BE207FB-16FC-4F31-905D-08693E8F3A83}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RabbitMQ.Configuration", "RabbitMQConfiguration\RabbitMQ.Configuration.csproj", "{179116AD-AE12-4DD9-9633-5B821F7554FA}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RabbitMQ.Server.MapedService", "RabbitMQ.Server.MapedService\RabbitMQ.Server.MapedService.csproj", "{503EDC45-50ED-47B9-BF44-9B97F8B2C34C}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{B6725CED-C54A-4018-9DDD-7807DBDC8A99}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "MapedService.Tests", "MapedService.Tests", "{77978844-B991-4DA7-A650-3FBD4C13164B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RabbitMQ.Server.MapedService.RabbitMQControllerBase.Test", "RabbitMQ.Server.MapedService.RabbitMQControllerBase.Test\RabbitMQ.Server.MapedService.RabbitMQControllerBase.Test.csproj", "{16E27488-3F58-4BD4-B05A-CFE72E7A5800}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RabbitMQ.Server.MapedService.RabbitMQControllerBase.Test", "RabbitMQ.Server.MapedService.RabbitMQControllerBase.Test\RabbitMQ.Server.MapedService.RabbitMQControllerBase.Test.csproj", "{16E27488-3F58-4BD4-B05A-CFE72E7A5800}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -25,14 +19,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{27C49038-8424-4321-81FC-C1296E5DC0BE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{27C49038-8424-4321-81FC-C1296E5DC0BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{27C49038-8424-4321-81FC-C1296E5DC0BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{27C49038-8424-4321-81FC-C1296E5DC0BE}.Release|Any CPU.Build.0 = Release|Any CPU
-		{179116AD-AE12-4DD9-9633-5B821F7554FA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{179116AD-AE12-4DD9-9633-5B821F7554FA}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{179116AD-AE12-4DD9-9633-5B821F7554FA}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{179116AD-AE12-4DD9-9633-5B821F7554FA}.Release|Any CPU.Build.0 = Release|Any CPU
 		{503EDC45-50ED-47B9-BF44-9B97F8B2C34C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{503EDC45-50ED-47B9-BF44-9B97F8B2C34C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{503EDC45-50ED-47B9-BF44-9B97F8B2C34C}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -46,8 +32,6 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{27C49038-8424-4321-81FC-C1296E5DC0BE} = {176B2B19-8F90-456C-9B19-5FB3E5C94A57}
-		{179116AD-AE12-4DD9-9633-5B821F7554FA} = {0BE207FB-16FC-4F31-905D-08693E8F3A83}
 		{503EDC45-50ED-47B9-BF44-9B97F8B2C34C} = {176B2B19-8F90-456C-9B19-5FB3E5C94A57}
 		{B6725CED-C54A-4018-9DDD-7807DBDC8A99} = {176B2B19-8F90-456C-9B19-5FB3E5C94A57}
 		{77978844-B991-4DA7-A650-3FBD4C13164B} = {B6725CED-C54A-4018-9DDD-7807DBDC8A99}

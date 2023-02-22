@@ -17,7 +17,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\RabbitMQ.Server.MapedService\RabbitMQ.Server.MapedService.csproj" />
-    <ProjectReference Include="..\RabbitMQServerService\RabbitMQ.Server.Service.csproj" />
   </ItemGroup>
 
 </Project>
