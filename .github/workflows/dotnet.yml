@@ -20,6 +20,7 @@ jobs:
       uses: actions/setup-dotnet@v3
       with:
         dotnet-version: 6.0.x
+        
     - name: Restore dependencies
       run: dotnet restore
     - name: Build
@@ -29,8 +30,6 @@ jobs:
       
     - name: Pack
       run: dotnet pack RabbitMQ.Server.MapedService/EBCEYS.RabbitMQ.Server.MappedService.csproj -c Release --no-restore --no-build --include-symbols -p:SymbolPackageFormat=snupkg -o .
-    - name: Nuget Package
-      run: dotnet nuget add source --username EBCEYS --password ${{ secrets.TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/EBCEYS/index.json"
     - name: Push to NuGet
-      run: dotnet nuget push *.nupkg --skip-duplicate -s https://api.nuget.org/v3/index.json -k ${{secrets.NUGET_API_KEY}} --api-key ${{ secrets.TOKEN }} --source "github"
+      run: dotnet nuget push *.nupkg --skip-duplicate -s https://api.nuget.org/v3/index.json -k ${{secrets.NUGET_API_KEY}} --source "github"
 
