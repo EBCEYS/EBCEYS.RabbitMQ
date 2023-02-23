@@ -2,7 +2,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace RabbitMQ.Server.MapedService.Data
+namespace EBCEYS.RabbitMQ.Server.MappedService.Data
 {
     public sealed class BaseRabbitMQRequest
     {

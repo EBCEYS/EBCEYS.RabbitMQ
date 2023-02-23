@@ -5,7 +5,7 @@ VisualStudioVersion = 17.4.33403.182
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Server", "Server", "{176B2B19-8F90-456C-9B19-5FB3E5C94A57}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RabbitMQ.Server.MapedService", "RabbitMQ.Server.MapedService\RabbitMQ.Server.MapedService.csproj", "{503EDC45-50ED-47B9-BF44-9B97F8B2C34C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EBCEYS.RabbitMQ.Server.MappedService", "RabbitMQ.Server.MapedService\EBCEYS.RabbitMQ.Server.MappedService.csproj", "{503EDC45-50ED-47B9-BF44-9B97F8B2C34C}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{B6725CED-C54A-4018-9DDD-7807DBDC8A99}"
 EndProject

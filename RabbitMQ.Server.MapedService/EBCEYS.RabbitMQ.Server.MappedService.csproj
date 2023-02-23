@@ -1,10 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="build\Version.props" />
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+	<PackageVersion>$(PackageVersion)</PackageVersion>
     <Title>EBCEYS.RabbitMQ</Title>
     <Description>Библиотека для работы с брокером сообщений RabbitMQ</Description>
     <PackageProjectUrl>https://github.com/EBCEYS/EBCEYS.RabbitMQ</PackageProjectUrl>

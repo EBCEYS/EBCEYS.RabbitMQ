@@ -1,4 +1,4 @@
-﻿namespace RabbitMQ.Server.MapedService.Exceptions
+﻿namespace EBCEYS.RabbitMQ.Server.MappedService.Exceptions
 {
     internal class RabbitMQControllerException : Exception
     {

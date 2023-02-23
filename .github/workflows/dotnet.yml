@@ -23,12 +23,12 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore
     - name: Build
-      run: dotnet build RabbitMQ.Server.MapedService/RabbitMQ.Server.MapedService.csproj -c Release --no-restore
+      run: dotnet build RabbitMQ.Server.MapedService/EBCEYS.RabbitMQ.Server.MappedService.csproj -c Release --no-restore -p:PackageVersion=$(BUILD_TIMESTAMP)
     - name: Test
       run: dotnet test -c Release
       
     - name: Pack
-      run: dotnet pack RabbitMQ.Server.MapedService/RabbitMQ.Server.MapedService.csproj -c Release --no-restore --no-build --include-symbols -p:SymbolPackageFormat=snupkg -o .
+      run: dotnet pack RabbitMQ.Server.MapedService/EBCEYS.RabbitMQ.Server.MappedService.csproj -c Release --no-restore --no-build --include-symbols -p:SymbolPackageFormat=snupkg -o .
 
     - name: Push to NuGet
       run: dotnet nuget push *.nupkg --skip-duplicate -s https://api.nuget.org/v3/index.json -k ${{secrets.NUGET_API_KEY}}

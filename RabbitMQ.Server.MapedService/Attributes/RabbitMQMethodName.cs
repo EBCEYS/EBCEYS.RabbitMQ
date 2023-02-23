@@ -1,4 +1,4 @@
-﻿namespace RabbitMQ.Server.MapedService.Attributes
+﻿namespace EBCEYS.RabbitMQ.Server.MappedService.Attributes
 {
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
     public sealed class RabbitMQMethodName : Attribute

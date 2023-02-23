@@ -4,11 +4,11 @@
 
 Библиотека для работы с брокером сообщений RabbitMQ.
 
-### RabbitMQ.Server.Service
+### EBCEYS.RabbitMQ.Server.Service
 
 Реализация consumer-a как IHostedService.
 
-### RabbitMQ.Server.MapedService
+### EBCEYS.RabbitMQ.Server.MappedService
 
 Попытка реализации сервиса consumer-a через контроллеры (а-ля ControllerBase для http).
 

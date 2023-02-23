@@ -4,9 +4,9 @@ using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Text.Json;
 using System.Text;
-using RabbitMQ.Configuration;
+using EBCEYS.RabbitMQ.Configuration;
 
-namespace RabbitMQServerService
+namespace EBCEYS.RabbitMQ.Server.Service
 {
     public class RabbitMQServer : IHostedService, IAsyncDisposable
     {

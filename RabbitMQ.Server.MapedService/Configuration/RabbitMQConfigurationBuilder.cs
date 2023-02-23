@@ -1,6 +1,6 @@
 ﻿using RabbitMQ.Client;
 
-namespace RabbitMQ.Configuration
+namespace EBCEYS.RabbitMQ.Configuration
 {
     public sealed class RabbitMQConfigurationBuilder
     {

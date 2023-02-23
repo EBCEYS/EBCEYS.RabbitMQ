@@ -1,7 +1,7 @@
 ﻿using RabbitMQ.Client;
 using System.ComponentModel.DataAnnotations;
 
-namespace RabbitMQ.Configuration
+namespace EBCEYS.RabbitMQ.Configuration
 {
     public class RabbitMQConfiguration
     {

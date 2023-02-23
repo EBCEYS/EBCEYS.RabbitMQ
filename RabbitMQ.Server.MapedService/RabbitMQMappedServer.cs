@@ -1,20 +1,20 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client.Events;
-using RabbitMQ.Server.MapedService.Controllers;
-using RabbitMQServerService;
+using EBCEYS.RabbitMQ.Server.MappedService.Controllers;
+using EBCEYS.RabbitMQ.Server.Service;
 using System.Reflection;
 
-namespace RabbitMQ.Server.MapedService
+namespace EBCEYS.RabbitMQ.Server.MappedService
 {
-    public class RabbitMQMapedServer : IHostedService, IAsyncDisposable, IDisposable
+    public class RabbitMQMappedServer : IHostedService, IAsyncDisposable, IDisposable
     {
         public RabbitMQServer Server { get; }
 
         private readonly ILogger logger;
         private readonly IEnumerable<RabbitMQControllerBase>? controllers;
 
-        public RabbitMQMapedServer(ILogger logger, Func<RabbitMQServer> serverCreation, IEnumerable<RabbitMQControllerBase>? controllers = null)
+        public RabbitMQMappedServer(ILogger logger, Func<RabbitMQServer> serverCreation, IEnumerable<RabbitMQControllerBase>? controllers = null)
         {
             if (serverCreation is null)
             {
@@ -25,7 +25,7 @@ namespace RabbitMQ.Server.MapedService
             Server = serverCreation.Invoke();
             this.controllers = controllers;
         }
-        public RabbitMQMapedServer(ILogger logger, RabbitMQServer server, IEnumerable<RabbitMQControllerBase>? controllers = null)
+        public RabbitMQMappedServer(ILogger logger, RabbitMQServer server, IEnumerable<RabbitMQControllerBase>? controllers = null)
         {
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             Server = server ?? throw new ArgumentNullException(nameof(server));

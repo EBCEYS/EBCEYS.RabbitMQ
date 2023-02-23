@@ -1,11 +1,11 @@
 ﻿using RabbitMQ.Client.Events;
-using RabbitMQ.Server.MapedService.Attributes;
-using RabbitMQ.Server.MapedService.Data;
-using RabbitMQ.Server.MapedService.Exceptions;
+using EBCEYS.RabbitMQ.Server.MappedService.Attributes;
+using EBCEYS.RabbitMQ.Server.MappedService.Data;
+using EBCEYS.RabbitMQ.Server.MappedService.Exceptions;
 using System.Reflection;
 using System.Text.Json;
 
-namespace RabbitMQ.Server.MapedService.Controllers
+namespace EBCEYS.RabbitMQ.Server.MappedService.Controllers
 {
     /// <summary>
     /// Base controller class. <br/>

@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace RabbitMQ.Configuration
+namespace EBCEYS.RabbitMQ.Configuration
 {
     public class ExchangeConfiguration
     {

@@ -1,12 +1,12 @@
 using RabbitMQ.Client.Events;
-using RabbitMQ.Server.MapedService.Attributes;
-using RabbitMQ.Server.MapedService.Controllers;
-using RabbitMQ.Server.MapedService.Data;
+using EBCEYS.RabbitMQ.Server.MappedService.Attributes;
+using EBCEYS.RabbitMQ.Server.MappedService.Controllers;
+using EBCEYS.RabbitMQ.Server.MappedService.Data;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
 
-namespace RabbitMQ.Server.MapedService.RabbitMQControllerBaseTest
+namespace EBCEYS.RabbitMQ.Server.MappedService.RabbitMQControllerBaseTest
 {
     [TestClass]
     public class RabbitMQControllerBaseTest

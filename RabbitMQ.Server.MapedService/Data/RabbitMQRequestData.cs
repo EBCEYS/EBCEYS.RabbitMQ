@@ -1,4 +1,4 @@
-﻿namespace RabbitMQ.Server.MapedService.Data
+﻿namespace EBCEYS.RabbitMQ.Server.MappedService.Data
 {
     public class RabbitMQRequestData
     {
