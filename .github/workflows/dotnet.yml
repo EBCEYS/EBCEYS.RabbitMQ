@@ -30,8 +30,9 @@ jobs:
       uses: SiqiLu/dotnet-bump-version@2.0.0
       with:
           version_files: "**/*.csproj"
-          version_mask: 0.0.1
+          version_mask: 1.0.1
           version_overwrite: "*.*.*"
+          github_token: ${{ secrets.TOKEN }}
       
     - name: Pack
       run: dotnet pack RabbitMQ.Server.MapedService/EBCEYS.RabbitMQ.Server.MappedService.csproj -c Release --no-restore --no-build --include-symbols -p:SymbolPackageFormat=snupkg -o .

@@ -1,5 +1,7 @@
 # EBCEYS.RabbitMQ
 
+[![Build](https://github.com/EBCEYS/EBCEYS.RabbitMQ/actions/workflows/dotnet.yml/badge.svg)](https://github.com/EBCEYS/EBCEYS.RabbitMQ/actions/workflows/dotnet.yml)
+
 ## Описание
 
 Библиотека для работы с брокером сообщений RabbitMQ.
