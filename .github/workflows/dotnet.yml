@@ -6,8 +6,12 @@ name: .NET
 on:
   push:
     branches: [ "main" ]
+    tags:
+    - "v[0-9]+.[0-9]+.[0-9]+"
   pull_request:
     branches: [ "main" ]
+    tags:
+    - "v[0-9]+.[0-9]+.[0-9]+"
 
 jobs:
   build:
@@ -21,18 +25,19 @@ jobs:
       with:
         dotnet-version: 6.0.x
 
-    - name: Set VERSION variable from tag
-      run: echo "VERSION=${GITHUB_REF/refs\/tags\/v/}" >> $GITHUB_ENV
+    - name: Get version
+      id: version
+      uses: battila7/get-version-action@v2
 
     - name: Restore dependencies
       run: dotnet restore
     - name: Build
-      run: dotnet build RabbitMQ.Server.MapedService/EBCEYS.RabbitMQ.Server.MappedService.csproj -c Release --no-restore -p:PackageVersion=${Version}
+      run: dotnet build RabbitMQ.Server.MapedService/EBCEYS.RabbitMQ.Server.MappedService.csproj -c Release --no-restore -p:PackageVersion=${{ steps.version.outputs.version-without-v }}
     - name: Test
       run: dotnet test -c Release
       
     - name: Pack
-      run: dotnet pack RabbitMQ.Server.MapedService/EBCEYS.RabbitMQ.Server.MappedService.csproj -c Release -p:PackageVersion=${Version} --no-restore --no-build --include-symbols -p:SymbolPackageFormat=snupkg -o .
+      run: dotnet pack RabbitMQ.Server.MapedService/EBCEYS.RabbitMQ.Server.MappedService.csproj -c Release -p:PackageVersion=${{ steps.version.outputs.version-without-v }} --no-restore --no-build --include-symbols -p:SymbolPackageFormat=snupkg -o .
 
     - name: Push to NuGet
       run: dotnet nuget push *.nupkg --skip-duplicate -s https://api.nuget.org/v3/index.json -k ${{secrets.NUGET_API_KEY}}
