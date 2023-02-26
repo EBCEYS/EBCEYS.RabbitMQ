@@ -29,16 +29,16 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Controllers
         private static IEnumerable<MethodInfo> GetControllerMethods(Type controllerType)
         {
             IEnumerable<MethodInfo> methods = controllerType.GetMethods().Where(m => m.Attributes.HasFlag(MethodAttributes.Public));
-            return methods.Where(m => (m.GetCustomAttribute(typeof(RabbitMQMethodName)) as RabbitMQMethodName) != null);
+            return methods.Where(m => (m.GetCustomAttribute(typeof(RabbitMQMethod)) as RabbitMQMethod) != null);
         }
 
-        public MethodInfo? GetMethodToExecute(BasicDeliverEventArgs eventArgs)
+        public MethodInfo? GetMethodToExecute(BasicDeliverEventArgs eventArgs, JsonSerializerOptions? serializerOptions = null)
         {
             if (eventArgs is null)
             {
                 throw new ArgumentNullException(nameof(eventArgs));
             }
-            request = new(eventArgs);
+            request = new(eventArgs, serializerOptions);
 
             if (RabbitMQMethods is null)
             {
@@ -54,7 +54,7 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Controllers
             {
                 throw new ArgumentException($"\"{nameof(methodName)}\" не может быть пустым или содержать только пробел.", nameof(methodName));
             }
-            MethodInfo? method = RabbitMQMethods!.FirstOrDefault(m => (m.GetCustomAttribute(typeof(RabbitMQMethodName)) as RabbitMQMethodName)?.Name == methodName);
+            MethodInfo? method = RabbitMQMethods!.FirstOrDefault(m => (m.GetCustomAttribute(typeof(RabbitMQMethod)) as RabbitMQMethod)?.Name == methodName);
             return method;
         }
 

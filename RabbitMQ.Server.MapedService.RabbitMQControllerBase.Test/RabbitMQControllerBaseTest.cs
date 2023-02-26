@@ -199,29 +199,29 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.RabbitMQControllerBaseTest
         {
 
         }
-        [RabbitMQMethodName("TestTaskMethod")]
+        [RabbitMQMethod("TestTaskMethod")]
         public async Task TestTaskMethod()
         {
             await Task.Delay(500);
         }
-        [RabbitMQMethodName("TestMethodWithResponse")]
+        [RabbitMQMethod("TestMethodWithResponse")]
         public async Task<int> TestTaskMethodWithResponse()
         {
             await Task.Delay(600);
             return 0;
         }
-        [RabbitMQMethodName("TestMethodWithArguments")]
+        [RabbitMQMethod("TestMethodWithArguments")]
         public async Task TestTaskMethodWithArguments(int a, int b)
         {
             await Task.Delay(a);
             await Task.Delay(b);
         }
-        [RabbitMQMethodName("TestMethodWithArgumentsAndResponse")]
+        [RabbitMQMethod("TestMethodWithArgumentsAndResponse")]
         public async Task<int> TestTaskMethodWithArgumentsAndResponse(int a, int b)
         {
             return a + b;
         }
-        [RabbitMQMethodName("TestMethodWithClassAttr")]
+        [RabbitMQMethod("TestMethodWithClassAttr")]
         public async Task<int> TestTaskMethodWithArgumentsAndResponse(TestAtr atr)
         {
             return atr.Sum();

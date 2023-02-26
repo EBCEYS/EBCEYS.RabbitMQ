@@ -5,10 +5,11 @@ using RabbitMQ.Client.Events;
 using System.Text.Json;
 using System.Text;
 using EBCEYS.RabbitMQ.Configuration;
+using System.Text.Json.Serialization;
 
 namespace EBCEYS.RabbitMQ.Server.Service
 {
-    public class RabbitMQServer : IHostedService, IAsyncDisposable
+    public class RabbitMQServer : IHostedService, IAsyncDisposable, IDisposable
     {
         private readonly IConnection connection;
         private readonly IModel channel;
@@ -16,7 +17,8 @@ namespace EBCEYS.RabbitMQ.Server.Service
         private readonly AsyncEventingBasicConsumer consumer;
         private readonly RabbitMQConfiguration configuration;
         private AsyncEventHandler<BasicDeliverEventArgs>? consumerAction;
-        private readonly JsonSerializerOptions? serializerOptions;
+
+        public JsonSerializerOptions? SerializerOptions { get; private set; }
 
         public RabbitMQServer(ILogger logger, 
             RabbitMQConfiguration configuration, 
@@ -25,7 +27,14 @@ namespace EBCEYS.RabbitMQ.Server.Service
         {
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             this.consumerAction = consumerAction;
-            this.serializerOptions = serializerOptions;
+            this.SerializerOptions = serializerOptions ?? new()
+            {
+                Converters = { new JsonStringEnumConverter() },
+                WriteIndented = false,
+                ReadCommentHandling = JsonCommentHandling.Skip,
+                AllowTrailingCommas = true,
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+            };
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
             connection = this.configuration.Factory!.CreateConnection();
@@ -38,7 +47,7 @@ namespace EBCEYS.RabbitMQ.Server.Service
 
         public void SetConsumerAction(AsyncEventHandler<BasicDeliverEventArgs> consumerAction)
         {
-            if (this.consumerAction != null)
+            if (this.consumerAction is not null)
             {
                 throw new InvalidOperationException("Consumer action is already set!");
             }
@@ -111,9 +120,9 @@ namespace EBCEYS.RabbitMQ.Server.Service
                 throw new ArgumentNullException(nameof(response));
             }
 
-            if (serializerOptions is null)
+            if (SerializerOptions is null)
             {
-                throw new Exception($"{nameof(serializerOptions)} is null! Can not serialize response!");
+                throw new Exception($"{nameof(SerializerOptions)} is null! Can not serialize response!");
             }
             await Task.Run(() =>
             {
@@ -122,7 +131,7 @@ namespace EBCEYS.RabbitMQ.Server.Service
                     IBasicProperties replyProps = channel.CreateBasicProperties();
                     replyProps.CorrelationId = ea.BasicProperties.CorrelationId;
 
-                    byte[] resp = JsonSerializer.SerializeToUtf8Bytes(response, serializerOptions);
+                    byte[] resp = JsonSerializer.SerializeToUtf8Bytes(response, SerializerOptions);
 
                     logger.LogInformation("On request {id} response is {resp}", replyProps.CorrelationId, Encoding.UTF8.GetString(resp));
 
@@ -143,10 +152,19 @@ namespace EBCEYS.RabbitMQ.Server.Service
 
         public ValueTask DisposeAsync()
         {
+            connection.Close();
             connection.Dispose();
             channel.Dispose();
             GC.SuppressFinalize(this);
             return ValueTask.CompletedTask;
+        }
+
+        public void Dispose()
+        {
+            connection.Close();
+            connection.Dispose();
+            channel.Dispose();
+            GC.SuppressFinalize(this);
         }
     }
 }

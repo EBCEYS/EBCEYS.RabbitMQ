@@ -48,7 +48,7 @@ namespace EBCEYS.RabbitMQ.Server.MappedService
                 }
                 foreach (RabbitMQControllerBase c in controllers)
                 {
-                    MethodInfo? method = c.GetMethodToExecute(args);
+                    MethodInfo? method = c.GetMethodToExecute(args, Server.SerializerOptions);
                     if (method is null)
                     {
                         continue;
@@ -82,6 +82,7 @@ namespace EBCEYS.RabbitMQ.Server.MappedService
 
         public void Dispose()
         {
+            Server.Dispose();
             DisposeAllControllers();
             GC.SuppressFinalize(this);
         }

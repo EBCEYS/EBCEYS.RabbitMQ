@@ -26,7 +26,7 @@ jobs:
     - name: Build
       run: dotnet build RabbitMQ.Server.MapedService/EBCEYS.RabbitMQ.Server.MappedService.csproj -c Release --no-restore
     - name: Test
-      run: dotnet test -c Release
+      run: dotnet test RabbitMQ.Server.MapedService.RabbitMQControllerBase.Test -c Release
       
     - name: Pack
       run: dotnet pack RabbitMQ.Server.MapedService/EBCEYS.RabbitMQ.Server.MappedService.csproj -c Release --no-restore --no-build --include-symbols -p:SymbolPackageFormat=snupkg -o .

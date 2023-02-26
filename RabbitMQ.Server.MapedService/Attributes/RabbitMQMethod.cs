@@ -1,9 +1,9 @@
 ﻿namespace EBCEYS.RabbitMQ.Server.MappedService.Attributes
 {
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
-    public sealed class RabbitMQMethodName : Attribute
+    public sealed class RabbitMQMethod : Attribute
     {
         public string Name { get; }
-        public RabbitMQMethodName(string name) { Name = name; }
+        public RabbitMQMethod(string name) { Name = name; }
     }
 }
