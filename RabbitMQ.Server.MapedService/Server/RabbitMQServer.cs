@@ -147,7 +147,17 @@ namespace EBCEYS.RabbitMQ.Server.Service
 
         public async Task StopAsync(CancellationToken cancellationToken)
         {
-            await DisposeAsync();
+            await Task.Run(() =>
+            {
+                try
+                {
+                    connection.Close();
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Error on stoping service!");
+                }
+            }, cancellationToken);
         }
 
         public ValueTask DisposeAsync()

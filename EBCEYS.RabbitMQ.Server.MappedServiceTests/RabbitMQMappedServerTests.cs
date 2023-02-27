@@ -22,7 +22,7 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Tests
                     UserName = "ebcey1",
                     Password = "123"
                 });
-                configBuilder.AddQueueConfiguration(new("TestQueue"));
+                configBuilder.AddQueueConfiguration(new("TestQueue", autoDelete: true));
                 return new RabbitMQServer(logger, configBuilder.Build());
             });
             Assert.IsNotNull(server);
@@ -37,7 +37,7 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Tests
                 UserName = "ebcey1",
                 Password = "123"
             });
-            configBuilder.AddQueueConfiguration(new("TestQueue"));
+            configBuilder.AddQueueConfiguration(new("TestQueue", autoDelete: true));
             RabbitMQServer server = new(logger, configBuilder.Build());
             using RabbitMQMappedServer mapedServer = new(logger, server);
             Assert.IsNotNull(mapedServer);
@@ -52,7 +52,7 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Tests
                 UserName = "ebcey1",
                 Password = "123"
             });
-            configBuilder.AddQueueConfiguration(new("TestQueue"));
+            configBuilder.AddQueueConfiguration(new("TestQueue", autoDelete: true));
             RabbitMQServer server = new(logger, configBuilder.Build());
             using RabbitMQMappedServer mapedServer = new(logger, server);
 
@@ -69,7 +69,7 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Tests
                 UserName = "ebcey1",
                 Password = "123"
             });
-            configBuilder.AddQueueConfiguration(new("TestQueue"));
+            configBuilder.AddQueueConfiguration(new("TestQueue", autoDelete: true));
             RabbitMQServer server = new(logger, configBuilder.Build());
             RabbitMQMappedServer mapedServer = new(logger, server);
 
