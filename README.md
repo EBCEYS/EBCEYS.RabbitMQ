@@ -36,7 +36,7 @@ IHost host = Host.CreateDefaultBuilder(args)
     })
     .ConfigureServices(services =>
     {
-        services.AddSingleton<RabbitMQControllerBase, ExampleController>();
+        services.AddRabbitMQController<ExampleController>();
     
         services.AddRabbitMQMappedServer(configBuilder.Build());
     
