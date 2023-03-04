@@ -36,7 +36,7 @@ namespace EBCEYS.RabbitMQ.ExampleService
                 })
                 .ConfigureServices(services =>
                 {
-                    services.AddSingleton<RabbitMQControllerBase, ExampleController>();
+                    services.AddRabbitMQController<ExampleController>();
 
                     services.AddRabbitMQMappedServer(config);
 

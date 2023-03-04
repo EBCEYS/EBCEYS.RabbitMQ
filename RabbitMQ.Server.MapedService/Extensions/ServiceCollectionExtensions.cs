@@ -61,7 +61,7 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Extensions
         }
         public static IServiceCollection AddRabbitMQController<T>(this IServiceCollection services) where T: RabbitMQControllerBase
         {
-            return services.AddSingleton<IRabbitMQControllerBase, T>();
+            return services.AddSingleton<RabbitMQControllerBase, T>();
         }
         public static IServiceCollection FixRabbitMQControllers(this IServiceCollection services)
         {

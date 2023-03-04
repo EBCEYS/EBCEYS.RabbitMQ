@@ -5,8 +5,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-	<PackageVersion>1.1.1.0</PackageVersion>
-	<Version>1.1.1.0</Version>
+	<PackageVersion>1.1.2.0</PackageVersion>
+	<Version>1.1.2.0</Version>
     <Title>EBCEYS.RabbitMQ</Title>
     <Description>Библиотека для работы с брокером сообщений RabbitMQ</Description>
     <PackageProjectUrl>https://github.com/EBCEYS/EBCEYS.RabbitMQ</PackageProjectUrl>
