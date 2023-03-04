@@ -30,7 +30,7 @@ namespace EBCEYS.RabbitMQ.Client
 
         private readonly ConcurrentDictionary<string, RabbitMQClientResponse> ResponseDictionary = new();
 
-        public RabbitMQClient(ILogger logger, RabbitMQConfiguration configuration, TimeSpan? requestsTimeout = null, JsonSerializerOptions? serializerOptions = null)
+        public RabbitMQClient(ILogger<RabbitMQClient> logger, RabbitMQConfiguration configuration, TimeSpan? requestsTimeout = null, JsonSerializerOptions? serializerOptions = null)
         {
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
@@ -117,23 +117,15 @@ namespace EBCEYS.RabbitMQ.Client
         {
             await Task.Run(() =>
             {
-                byte[] body = ea.Body.ToArray();
-                logger.LogInformation("Get rabbit response: {encodedMessage}", Encoding.UTF8.GetString(body));
-                object? response = null;
-                try
-                {
-                    response = JsonSerializer.Deserialize<object>(body, serializerOptions);
-                }
-                catch (Exception ex)
-                {
-                    logger.LogError(ex, "Error on receiving message!");
-                }
-                if (response is not null)
+                string body = Encoding.UTF8.GetString(ea.Body.ToArray());
+                logger.LogInformation("Get rabbit response: {encodedMessage} {id}", body, ea.BasicProperties.CorrelationId);
+                if (body is not null)
                 {
                     if (ResponseDictionary.TryGetValue(ea.BasicProperties.CorrelationId, out RabbitMQClientResponse? value) && value is not null)
                     {
-                        value.Response = response;
+                        value.Response = body;
                         value.Event!.Set();
+                        logger.LogDebug("Set event!");
                         channel.BasicAck(ea.DeliveryTag, false);
                     }
                 }
@@ -208,10 +200,11 @@ namespace EBCEYS.RabbitMQ.Client
 
                 GetRPCProps(out IBasicProperties props, out string correlationId);
 
-                ResponseDictionary[correlationId] = new()
+                ManualResetEvent @event = new(false);
+                ResponseDictionary.TryAdd(correlationId, new()
                 {
-                    Event = new(false)
-                };
+                    Event = @event
+                });
 
                 string exchange = configuration.ExchangeConfiguration?.ExchangeName ?? "";
                 string queue = configuration.QueueConfiguration.QueueName;
@@ -222,12 +215,12 @@ namespace EBCEYS.RabbitMQ.Client
                     basicProperties: props,
                     body: msg);
 
-                ResponseDictionary[correlationId].Event!.WaitOne(requestsTimeout.Value.Seconds);
+                @event.WaitOne(requestsTimeout.Value);
                 if (ResponseDictionary.TryRemove(correlationId, out RabbitMQClientResponse? response) && response != null && response.Response != null)
                 {
                     try
                     {
-                        return JsonSerializer.Deserialize<T?>(response.Response.ToString()!, serializerOptions);
+                        return JsonSerializer.Deserialize<T?>(response.Response!, serializerOptions);
                     }
                     catch (Exception ex)
                     {

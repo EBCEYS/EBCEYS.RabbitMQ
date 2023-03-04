@@ -18,6 +18,34 @@
 
 Методы контроллера должны быть асинхронными.
 
+#### Пример конфигурации:
+```cs
+configBuilder = new();
+configBuilder.AddConnectionFactory(new()
+{
+    HostName = "Kuznetsovy-Server",
+    UserName = "ebcey1",
+    Password = "123"
+});
+configBuilder.AddQueueConfiguration(new("ExampleQueue", autoDelete: true));
+IHost host = Host.CreateDefaultBuilder(args)
+    .UseNLog()
+    .ConfigureLogging(log =>
+    {
+        log.AddNLog("nlog.config");
+    })
+    .ConfigureServices(services =>
+    {
+        services.AddSingleton<RabbitMQControllerBase, ExampleController>();
+    
+        services.AddRabbitMQMappedServer(configBuilder.Build());
+    
+        services.FixRabbitMQControllers();
+    })
+    .Build();
+host.Run();
+```
+
 ### EBCEYS.RabbitMQ.Client
 Реализация publisher-a для работы с брокером сообщений RabbitMQ.
 
@@ -29,6 +57,18 @@
 
 
 ## Изменения
+### v1.1.0 Большая переработка проекта
+Фичи:
+1) Добавил проекты с примерами работы клиента и сервера;
+2) Добавил базовый интерфейс для контроллера;
+3) Добавил методы расширения IServiceCollection, через который идет настройка сервера и контроллеров;
+4) RabbitMQMappedServer теперь не требует сервиса самого сервера, а инициирует его сам.
+5) Убрал кучу лишних конструкторов;
+6) Добавил дебаг логирование в сервисы;
+Фиксы:
+1) Исправлена ошибка, когда таймаут ожидания ответа на запрос учитывался в миллисекундах.
+2) Исправлена ошибка, когда не стартовал ресивер, если в настройках не указать, что он асинхронный;
+3) Исправил ошибку, когда при отправке ответа на запрос, MappedServer выдавал исключение.
 ### v1.0.4
 1) Изменил алгоритм работы при остановке сервиса. Теперь только закрывает соединение.
 2) Добавил реализацию клиента (EBCEYS.RabbitMQ.Client). Через него возможна отправка сообщений и запросов на контроллеры.
@@ -40,4 +80,3 @@
 
 ## Планы на развитие
 1) Дебаг в зависимости от найденных ошибок / отзывов.
-2) Добавить проект примера работы, в котором будет показана работа с контроллерами и клиентом.

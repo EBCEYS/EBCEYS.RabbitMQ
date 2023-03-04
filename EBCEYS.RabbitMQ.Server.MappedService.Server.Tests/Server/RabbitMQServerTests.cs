@@ -8,7 +8,7 @@ namespace EBCEYS.RabbitMQ.Server.Service.Tests
     [TestClass()]
     public class RabbitMQServerTests
     {
-        private readonly ILogger logger = new Logger<RabbitMQServerTests>(new NullLoggerFactory());
+        private readonly ILogger<RabbitMQServer> serverLogger = new Logger<RabbitMQServer>(new NullLoggerFactory());
         [TestMethod()]
         public void RabbitMQServerTest()
         {
@@ -20,7 +20,7 @@ namespace EBCEYS.RabbitMQ.Server.Service.Tests
                 Password = "123"
             });
             configBuilder.AddQueueConfiguration(new("TestQueue", autoDelete: true));
-            using RabbitMQServer server = new(logger, configBuilder.Build());
+            using RabbitMQServer server = new(serverLogger, configBuilder.Build());
             Assert.IsNotNull(server);
         }
 
@@ -35,11 +35,11 @@ namespace EBCEYS.RabbitMQ.Server.Service.Tests
                 Password = "123"
             });
             configBuilder.AddQueueConfiguration(new("TestQueue", autoDelete: true));
-            using RabbitMQServer server = new(logger, configBuilder.Build());
+            using RabbitMQServer server = new(serverLogger, configBuilder.Build());
 
             Assert.ThrowsException<ArgumentNullException>(() =>
             {
-                server.SetConsumerAction(null);
+                server.SetConsumerAction(null!);
             });
 
             server.SetConsumerAction(async (sender, args) =>
@@ -67,7 +67,7 @@ namespace EBCEYS.RabbitMQ.Server.Service.Tests
                 Password = "123"
             });
             configBuilder.AddQueueConfiguration(new("TestQueue", autoDelete: true));
-            using RabbitMQServer server = new(logger, configBuilder.Build());
+            using RabbitMQServer server = new(serverLogger, configBuilder.Build());
             await server.StartAsync(CancellationToken.None);
         }
 
@@ -82,7 +82,7 @@ namespace EBCEYS.RabbitMQ.Server.Service.Tests
                 Password = "123"
             });
             configBuilder.AddQueueConfiguration(new("TestQueue", autoDelete: true));
-            using RabbitMQServer server = new(logger, configBuilder.Build());
+            using RabbitMQServer server = new(serverLogger, configBuilder.Build());
 
             await server.StartAsync(CancellationToken.None);
 
@@ -100,7 +100,7 @@ namespace EBCEYS.RabbitMQ.Server.Service.Tests
                 Password = "123"
             });
             configBuilder.AddQueueConfiguration(new("TestQueue", autoDelete: true));
-            using RabbitMQServer server = new(logger, configBuilder.Build());
+            using RabbitMQServer server = new(serverLogger, configBuilder.Build());
 
             await server.StartAsync(CancellationToken.None);
 
@@ -118,7 +118,7 @@ namespace EBCEYS.RabbitMQ.Server.Service.Tests
                 Password = "123"
             });
             configBuilder.AddQueueConfiguration(new("TestQueue", autoDelete: true));
-            RabbitMQServer server = new(logger, configBuilder.Build());
+            RabbitMQServer server = new(serverLogger, configBuilder.Build());
             await server.StartAsync(CancellationToken.None);
             await server.StopAsync(CancellationToken.None);
         }
@@ -134,7 +134,7 @@ namespace EBCEYS.RabbitMQ.Server.Service.Tests
                 Password = "123"
             });
             configBuilder.AddQueueConfiguration(new("TestQueue", autoDelete: true));
-            RabbitMQServer server = new(logger, configBuilder.Build());
+            RabbitMQServer server = new(serverLogger, configBuilder.Build());
             await server.DisposeAsync();
         }
 
@@ -149,7 +149,7 @@ namespace EBCEYS.RabbitMQ.Server.Service.Tests
                 Password = "123"
             });
             configBuilder.AddQueueConfiguration(new("TestQueue", autoDelete: true));
-            RabbitMQServer server = new(logger, configBuilder.Build());
+            RabbitMQServer server = new(serverLogger, configBuilder.Build());
             server.Dispose();
         }
     }

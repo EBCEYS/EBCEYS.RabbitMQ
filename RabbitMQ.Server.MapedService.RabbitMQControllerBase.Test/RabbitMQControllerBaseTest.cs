@@ -200,29 +200,43 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.RabbitMQControllerBaseTest
 
         }
         [RabbitMQMethod("TestTaskMethod")]
+#pragma warning disable CA1822 // Пометьте члены как статические
         public async Task TestTaskMethod()
+#pragma warning restore CA1822 // Пометьте члены как статические
         {
             await Task.Delay(500);
         }
         [RabbitMQMethod("TestMethodWithResponse")]
+#pragma warning disable CA1822 // Пометьте члены как статические
         public async Task<int> TestTaskMethodWithResponse()
+#pragma warning restore CA1822 // Пометьте члены как статические
         {
             await Task.Delay(600);
             return 0;
         }
         [RabbitMQMethod("TestMethodWithArguments")]
+#pragma warning disable CA1822 // Пометьте члены как статические
         public async Task TestTaskMethodWithArguments(int a, int b)
+#pragma warning restore CA1822 // Пометьте члены как статические
         {
             await Task.Delay(a);
             await Task.Delay(b);
         }
         [RabbitMQMethod("TestMethodWithArgumentsAndResponse")]
+#pragma warning disable CS1998 // В асинхронном методе отсутствуют операторы await, будет выполнен синхронный метод
+#pragma warning disable CA1822 // Пометьте члены как статические
         public async Task<int> TestTaskMethodWithArgumentsAndResponse(int a, int b)
+#pragma warning restore CA1822 // Пометьте члены как статические
+#pragma warning restore CS1998 // В асинхронном методе отсутствуют операторы await, будет выполнен синхронный метод
         {
             return a + b;
         }
         [RabbitMQMethod("TestMethodWithClassAttr")]
+#pragma warning disable CS1998 // В асинхронном методе отсутствуют операторы await, будет выполнен синхронный метод
+#pragma warning disable CA1822 // Пометьте члены как статические
         public async Task<int> TestTaskMethodWithArgumentsAndResponse(TestAtr atr)
+#pragma warning restore CA1822 // Пометьте члены как статические
+#pragma warning restore CS1998 // В асинхронном методе отсутствуют операторы await, будет выполнен синхронный метод
         {
             return atr.Sum();
         }

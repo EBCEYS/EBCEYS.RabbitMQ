@@ -9,11 +9,12 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Tests
     [TestClass()]
     public class RabbitMQMappedServerTests
     {
-        private readonly ILogger logger = new Logger<RabbitMQMappedServerTests>(new NullLoggerFactory());
+        private readonly ILogger<RabbitMQServer> serverLogger = new Logger<RabbitMQServer>(new NullLoggerFactory());
+        private readonly ILogger<RabbitMQMappedServer> mappedServerLogger = new Logger<RabbitMQMappedServer>(new NullLoggerFactory());
         [TestMethod()]
         public void Ctor_Func_Test()
         {
-            using RabbitMQMappedServer server = new(logger, () =>
+            using RabbitMQMappedServer server = new(mappedServerLogger, () =>
             {
                 RabbitMQConfigurationBuilder configBuilder = new();
                 configBuilder.AddConnectionFactory(new()
@@ -23,7 +24,7 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Tests
                     Password = "123"
                 });
                 configBuilder.AddQueueConfiguration(new("TestQueue", autoDelete: true));
-                return new RabbitMQServer(logger, configBuilder.Build());
+                return new RabbitMQServer(serverLogger, configBuilder.Build());
             });
             Assert.IsNotNull(server);
         }
@@ -38,8 +39,8 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Tests
                 Password = "123"
             });
             configBuilder.AddQueueConfiguration(new("TestQueue", autoDelete: true));
-            RabbitMQServer server = new(logger, configBuilder.Build());
-            using RabbitMQMappedServer mapedServer = new(logger, server);
+            RabbitMQServer server = new(serverLogger, configBuilder.Build());
+            using RabbitMQMappedServer mapedServer = new(mappedServerLogger, server);
             Assert.IsNotNull(mapedServer);
         }
         [TestMethod()]
@@ -53,8 +54,8 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Tests
                 Password = "123"
             });
             configBuilder.AddQueueConfiguration(new("TestQueue", autoDelete: true));
-            RabbitMQServer server = new(logger, configBuilder.Build());
-            using RabbitMQMappedServer mapedServer = new(logger, server);
+            RabbitMQServer server = new(serverLogger, configBuilder.Build());
+            using RabbitMQMappedServer mapedServer = new(mappedServerLogger, server);
 
             await mapedServer.StartAsync(CancellationToken.None);
         }
@@ -70,8 +71,8 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Tests
                 Password = "123"
             });
             configBuilder.AddQueueConfiguration(new("TestQueue", autoDelete: true));
-            RabbitMQServer server = new(logger, configBuilder.Build());
-            RabbitMQMappedServer mapedServer = new(logger, server);
+            RabbitMQServer server = new(serverLogger, configBuilder.Build());
+            RabbitMQMappedServer mapedServer = new(mappedServerLogger, server);
 
             await mapedServer.StartAsync(CancellationToken.None);
             await mapedServer.StopAsync(CancellationToken.None);

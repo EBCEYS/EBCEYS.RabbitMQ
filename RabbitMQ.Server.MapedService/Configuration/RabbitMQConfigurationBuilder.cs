@@ -13,7 +13,7 @@ namespace EBCEYS.RabbitMQ.Configuration
             {
                 throw new ArgumentNullException(nameof(factory));
             }
-
+            factory.DispatchConsumersAsync = true;
             this.factory = factory;
             return this;
         }

@@ -9,9 +9,9 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Controllers
 {
     /// <summary>
     /// Base controller class. <br/>
-    /// Method should be asynchronous only!
+    /// Methods should be asynchronous only!
     /// </summary>
-    public class RabbitMQControllerBase : IDisposable
+    public abstract class RabbitMQControllerBase : IDisposable, IRabbitMQControllerBase
     {
         private BaseRabbitMQRequest? request;
         public IEnumerable<MethodInfo>? RabbitMQMethods { get; private set; }

@@ -2,7 +2,7 @@
 {
     class RabbitMQClientResponse
     {
-        public object? Response { get; set; }
+        public string? Response { get; set; }
         public ManualResetEvent? Event { get; set; }
     }
 }

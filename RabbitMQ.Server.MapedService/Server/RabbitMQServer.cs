@@ -13,14 +13,14 @@ namespace EBCEYS.RabbitMQ.Server.Service
     {
         private readonly IConnection connection;
         private readonly IModel channel;
-        private readonly ILogger logger;
-        private readonly AsyncEventingBasicConsumer consumer;
+        private readonly ILogger<RabbitMQServer> logger;
+        public AsyncEventingBasicConsumer Consumer { get; private set; }
         private readonly RabbitMQConfiguration configuration;
         private AsyncEventHandler<BasicDeliverEventArgs>? consumerAction;
 
         public JsonSerializerOptions? SerializerOptions { get; private set; }
 
-        public RabbitMQServer(ILogger logger, 
+        public RabbitMQServer(ILogger<RabbitMQServer> logger, 
             RabbitMQConfiguration configuration, 
             AsyncEventHandler<BasicDeliverEventArgs>? consumerAction = null, 
             JsonSerializerOptions? serializerOptions = null)
@@ -36,13 +36,12 @@ namespace EBCEYS.RabbitMQ.Server.Service
                 DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
             };
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
-
             connection = this.configuration.Factory!.CreateConnection();
             channel = connection.CreateModel();
             this.configuration = configuration;
-            consumer = new(channel);
+            Consumer = new(channel);
 
-            this.logger.LogInformation("Create rabbitMQ server service!");
+            this.logger.LogDebug("Create rabbitMQ server service!");
         }
 
         public void SetConsumerAction(AsyncEventHandler<BasicDeliverEventArgs> consumerAction)
@@ -56,6 +55,7 @@ namespace EBCEYS.RabbitMQ.Server.Service
                 throw new ArgumentNullException(nameof(consumerAction));
             }
             this.consumerAction = consumerAction;
+            logger.LogDebug("Set consumer action!");
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
@@ -81,10 +81,13 @@ namespace EBCEYS.RabbitMQ.Server.Service
                     configuration.QueueConfiguration.Exclusive, 
                     configuration.QueueConfiguration.AutoDelete, 
                     configuration.QueueConfiguration.Arguments);
-                channel.BasicConsume(configuration.QueueConfiguration.QueueName, false, consumer);
 
-                consumer.Received += consumerAction;
+                Consumer.Received += consumerAction;
+                channel.BasicConsume(configuration.QueueConfiguration.QueueName, false, Consumer);
+
+                logger.LogDebug("Consumer status on start: {status}", Consumer.IsRunning);
             }, cancellationToken);
+            logger.LogDebug("Start rabbitmq server!");
         }
         /// <summary>
         /// Acks the message. Use it in your consumer action.
@@ -98,6 +101,7 @@ namespace EBCEYS.RabbitMQ.Server.Service
                 throw new ArgumentNullException(nameof(ea));
             }
 
+            logger.LogDebug("Ack message: {tag}", ea.DeliveryTag);
             channel.BasicAck(ea.DeliveryTag, false);
         }
         /// <summary>
@@ -162,18 +166,26 @@ namespace EBCEYS.RabbitMQ.Server.Service
 
         public ValueTask DisposeAsync()
         {
-            connection.Close();
-            connection.Dispose();
-            channel.Dispose();
+            try
+            {
+                connection.Close();
+                connection.Dispose();
+                channel.Dispose();
+            }
+            catch { }
             GC.SuppressFinalize(this);
             return ValueTask.CompletedTask;
         }
 
         public void Dispose()
         {
-            connection.Close();
-            connection.Dispose();
-            channel.Dispose();
+            try
+            {
+                connection.Close();
+                connection.Dispose();
+                channel.Dispose();
+            }
+            catch { }
             GC.SuppressFinalize(this);
         }
     }
