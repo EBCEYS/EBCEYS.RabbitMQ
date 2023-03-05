@@ -37,10 +37,8 @@ IHost host = Host.CreateDefaultBuilder(args)
     .ConfigureServices(services =>
     {
         services.AddRabbitMQController<ExampleController>();
-    
-        services.AddRabbitMQMappedServer(configBuilder.Build());
-    
-        services.FixRabbitMQControllers();
+
+        services.AddRabbitMQMappedServer(config);
     })
     .Build();
 host.Run();
@@ -57,6 +55,9 @@ host.Run();
 
 
 ## Изменения
+### v1.1.3
+1) Переделаны контроллеры. Теперь они scoped.
+2) Убран метод FixRabbitMQControllers для IServiceCollection
 ### v1.1.2
 1) Исправлена ошибка, когда при использовании метода AddRabbitMQController, MappedServer мог не видеть контроллеры.
 ### v1.1.1 Большая переработка проекта

@@ -15,9 +15,9 @@ namespace EBCEYS.RabbitMQ.Server.MappedService
         public RabbitMQServer Server { get; }
 
         private readonly ILogger logger;
-        private readonly IEnumerable<IRabbitMQControllerBase> controllers;
+        private readonly IServiceProvider serviceProvider;
 
-        public RabbitMQMappedServer(ILogger<RabbitMQMappedServer> logger, RabbitMQConfiguration config, IServiceProvider serviceProvider, IEnumerable<IRabbitMQControllerBase> controllers, JsonSerializerOptions? serializerOptions = null)
+        public RabbitMQMappedServer(ILogger<RabbitMQMappedServer> logger, RabbitMQConfiguration config, IServiceProvider serviceProvider, JsonSerializerOptions? serializerOptions = null)
         {
             if (config is null)
             {
@@ -30,7 +30,7 @@ namespace EBCEYS.RabbitMQ.Server.MappedService
             }
 
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            this.controllers = controllers ?? throw new ArgumentNullException(nameof(controllers));
+            this.serviceProvider = serviceProvider;
             Server = new(serviceProvider.GetService<ILogger<RabbitMQServer>>()!, config, ConsumerAction, serializerOptions);
 
             logger.LogDebug("Create rabbitmq mapped server!");
@@ -47,7 +47,8 @@ namespace EBCEYS.RabbitMQ.Server.MappedService
             logger.LogDebug("Mapped server get request!");
             try
             {
-                foreach (IRabbitMQControllerBase c in controllers)
+                var ctrls = serviceProvider.CreateScope().ServiceProvider.GetServices<RabbitMQControllerBase>();
+                foreach (RabbitMQControllerBase c in ctrls)
                 {
                     MethodInfo? method = c.GetMethodToExecute(args, Server.SerializerOptions);
                     if (method is null)
@@ -63,7 +64,6 @@ namespace EBCEYS.RabbitMQ.Server.MappedService
                     object? result = await c.ProcessRequestWithResponseAsync(method);
                     if (result is not null)
                     {
-                        //result = Convert.ChangeType(result, returnParam.ParameterType);
                         await Server.SendResponseAsync(args, result);
                         return;
                     }

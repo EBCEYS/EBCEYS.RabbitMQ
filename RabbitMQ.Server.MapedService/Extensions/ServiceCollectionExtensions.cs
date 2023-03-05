@@ -19,7 +19,7 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Extensions
 
             services.AddSingleton<RabbitMQMappedServer>(sr =>
             {
-                return new RabbitMQMappedServer(sr.GetService<ILogger<RabbitMQMappedServer>>()!, config, sr, sr.GetService<IEnumerable<RabbitMQControllerBase>>()!, serializerOptions);
+                return new RabbitMQMappedServer(sr.GetService<ILogger<RabbitMQMappedServer>>()!, config, sr, serializerOptions);
             });
             return services.AddHostedService<RabbitMQMappedServer>(sr =>
             {
@@ -53,22 +53,18 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Extensions
             {
                 throw new ArgumentNullException(nameof(controllers));
             }
-            services.AddSingleton<IEnumerable<RabbitMQControllerBase>>(sp =>
+            controllers.ToList().ForEach(l =>
             {
-                return controllers;
+                services.AddScoped<RabbitMQControllerBase>(sp =>
+                {
+                    return l;
+                });
             });
             return services;
         }
         public static IServiceCollection AddRabbitMQController<T>(this IServiceCollection services) where T: RabbitMQControllerBase
         {
-            return services.AddSingleton<RabbitMQControllerBase, T>();
-        }
-        public static IServiceCollection FixRabbitMQControllers(this IServiceCollection services)
-        {
-            return services.AddSingleton<IEnumerable<IRabbitMQControllerBase>>(sr =>
-            {
-                return sr.GetServices<IRabbitMQControllerBase>()!;
-            });
+            return services.AddScoped<RabbitMQControllerBase, T>();
         }
     }
 }

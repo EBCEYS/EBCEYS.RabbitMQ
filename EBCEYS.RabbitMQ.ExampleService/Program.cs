@@ -39,8 +39,6 @@ namespace EBCEYS.RabbitMQ.ExampleService
                     services.AddRabbitMQController<ExampleController>();
 
                     services.AddRabbitMQMappedServer(config);
-
-                    services.FixRabbitMQControllers();
                 })
                 .Build();
             host.Run();
