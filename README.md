@@ -28,6 +28,7 @@ configBuilder.AddConnectionFactory(new()
     Password = "123"
 });
 configBuilder.AddQueueConfiguration(new("ExampleQueue", autoDelete: true));
+RabbitMQConfiguration config = configBuilder.Build();
 IHost host = Host.CreateDefaultBuilder(args)
     .UseNLog()
     .ConfigureLogging(log =>
