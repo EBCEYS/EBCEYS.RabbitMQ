@@ -1,4 +1,5 @@
-﻿using EBCEYS.RabbitMQ.Configuration;
+﻿using EBCEYS.RabbitMQ.Client;
+using EBCEYS.RabbitMQ.Configuration;
 using EBCEYS.RabbitMQ.Server.MappedService.Controllers;
 using EBCEYS.RabbitMQ.Server.Service;
 using Microsoft.Extensions.DependencyInjection;
@@ -47,6 +48,24 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Extensions
                 return sr.GetService<RabbitMQServer>()!;
             });
         }
+
+        public static IServiceCollection AddRabbitMQClient(this IServiceCollection services, RabbitMQConfiguration config, TimeSpan? requestTimeout = null, JsonSerializerOptions? serializerOptions = null)
+        {
+            if (config is null)
+            {
+                throw new ArgumentNullException(nameof(config));
+            }
+
+            services.AddSingleton<RabbitMQClient>(sr =>
+            {
+                return new RabbitMQClient(sr.GetService<ILogger<RabbitMQClient>>()!, config, requestTimeout, serializerOptions);
+            });
+            return services.AddHostedService<RabbitMQClient>(sr =>
+            {
+                return sr.GetService<RabbitMQClient>()!;
+            });
+        }
+
         public static IServiceCollection AddRabbitMQControllers(this IServiceCollection services, IEnumerable<RabbitMQControllerBase> controllers)
         {
             if (controllers is null)

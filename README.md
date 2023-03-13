@@ -56,6 +56,8 @@ host.Run();
 
 
 ## Изменения
+### v1.1.4
+1) В ServiceCollectionExtensions добавлен метод для добавления RabbitMQClient-a.
 ### v1.1.3
 1) Переделаны контроллеры. Теперь они scoped.
 2) Убран метод FixRabbitMQControllers для IServiceCollection
