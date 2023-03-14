@@ -1,6 +1,5 @@
 using EBCEYS.RabbitMQ.Configuration;
 using EBCEYS.RabbitMQ.ExampleService.Controllers;
-using EBCEYS.RabbitMQ.Server.MappedService.Controllers;
 using EBCEYS.RabbitMQ.Server.MappedService.Extensions;
 using NLog;
 using NLog.Web;

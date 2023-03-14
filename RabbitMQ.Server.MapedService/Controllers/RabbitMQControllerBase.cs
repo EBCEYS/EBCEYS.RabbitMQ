@@ -15,6 +15,7 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Controllers
     {
         private BaseRabbitMQRequest? request;
         public IEnumerable<MethodInfo>? RabbitMQMethods { get; private set; }
+        private JsonSerializerOptions? SerializerOptions { get; set; }
         public RabbitMQControllerBase()
         {
             SetControllerMethods();
@@ -38,7 +39,8 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Controllers
             {
                 throw new ArgumentNullException(nameof(eventArgs));
             }
-            request = new(eventArgs, serializerOptions);
+            SerializerOptions = serializerOptions;
+            request = new(eventArgs, SerializerOptions);
 
             if (RabbitMQMethods is null)
             {
@@ -115,7 +117,7 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Controllers
             List<object> arguments = new();
             for (int i = 0; i < methodArgs.Length; i++)
             {
-                object argument = JsonSerializer.Deserialize(request!.RequestData!.Params[i]!.ToString()!, methodArgs[i].ParameterType)!;
+                object argument = JsonSerializer.Deserialize(request!.RequestData!.Params[i]!.ToString()!, methodArgs[i].ParameterType, SerializerOptions)!;
                 arguments.Add(argument);
             }
 

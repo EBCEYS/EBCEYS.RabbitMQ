@@ -47,7 +47,7 @@ namespace EBCEYS.RabbitMQ.Server.MappedService
             logger.LogDebug("Mapped server get request!");
             try
             {
-                var ctrls = serviceProvider.CreateScope().ServiceProvider.GetServices<RabbitMQControllerBase>();
+                IEnumerable<RabbitMQControllerBase> ctrls = serviceProvider.CreateScope().ServiceProvider.GetServices<RabbitMQControllerBase>();
                 foreach (RabbitMQControllerBase c in ctrls)
                 {
                     MethodInfo? method = c.GetMethodToExecute(args, Server.SerializerOptions);

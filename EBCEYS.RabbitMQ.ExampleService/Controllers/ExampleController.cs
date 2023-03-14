@@ -13,7 +13,7 @@ namespace EBCEYS.RabbitMQ.ExampleService.Controllers
             this.logger.LogInformation("Create {name}", typeof(ExampleController).Name);
         }
         [RabbitMQMethod("ExampleMethod")]
-        public async Task<int> ExampleMethod(int a, int b)
+        public async Task<string> ExampleMethod(string a, string b)
         {
             logger.LogInformation("Get request with params {a}  and {b}! Result is: {result}", a, b, a + b);
             return await Task.FromResult(a + b);

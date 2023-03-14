@@ -35,11 +35,11 @@ namespace EBCEYS.RabbitMQ.ExampleClient
                 RabbitMQRequestData request = new()
                 {
                     Method = "ExampleMethod",
-                    Params = new object[] { 1, 2 }
+                    Params = new object[] { "asd", "asd" }
                 };
                 logger.LogInformation("Request is {@request}", request);
-                int? result = await client.SendRequestAsync<int?>(request);
-                logger.LogInformation($"Result is: {result ?? -1}");
+                string? result = await client.SendRequestAsync<string?>(request);
+                logger.LogInformation($"Result is: {result ?? "-1"}");
                 await Task.Delay(TimeSpan.FromSeconds(5));
             }
         }

@@ -5,6 +5,7 @@ using EBCEYS.RabbitMQ.Server.MappedService.Data;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace EBCEYS.RabbitMQ.Server.MappedService.RabbitMQControllerBaseTest
 {
@@ -46,7 +47,10 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.RabbitMQControllerBaseTest
                 Body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(requestData))
             };
 
-            MethodInfo? method = controller.GetMethodToExecute(eventArgs);
+            MethodInfo? method = controller.GetMethodToExecute(eventArgs, new()
+            {
+                Converters = { new StringConverter() }
+            });
             Assert.IsNotNull(method);
         }
         [TestMethod]
@@ -63,7 +67,10 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.RabbitMQControllerBaseTest
                 Body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(requestData))
             };
 
-            MethodInfo? method = controller.GetMethodToExecute(eventArgs);
+            MethodInfo? method = controller.GetMethodToExecute(eventArgs, new()
+            {
+                Converters = { new StringConverter() }
+            });
             Assert.IsNull(method);
         }
         [TestMethod]
@@ -80,7 +87,10 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.RabbitMQControllerBaseTest
                 Body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(requestData))
             };
 
-            MethodInfo? method = controller.GetMethodToExecute(eventArgs);
+            MethodInfo? method = controller.GetMethodToExecute(eventArgs, new()
+            {
+                Converters = { new StringConverter() }
+            });
 
             await controller.ProcessRequestAsync(method!);
 
@@ -100,7 +110,10 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.RabbitMQControllerBaseTest
                 Body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(requestData))
             };
 
-            MethodInfo? method = controller.GetMethodToExecute(eventArgs);
+            MethodInfo? method = controller.GetMethodToExecute(eventArgs, new()
+            {
+                Converters = { new StringConverter() }
+            });
 
             object? value = await controller.ProcessRequestWithResponseAsync(method!);
 
@@ -127,7 +140,10 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.RabbitMQControllerBaseTest
                 Body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(requestData))
             };
 
-            MethodInfo? method = controller.GetMethodToExecute(eventArgs);
+            MethodInfo? method = controller.GetMethodToExecute(eventArgs, new()
+            {
+                Converters = { new StringConverter() }
+            });
 
             await controller.ProcessRequestAsync(method!);
         }
@@ -149,7 +165,10 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.RabbitMQControllerBaseTest
                 Body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(requestData))
             };
 
-            MethodInfo? method = controller.GetMethodToExecute(eventArgs);
+            MethodInfo? method = controller.GetMethodToExecute(eventArgs, new()
+            {
+                Converters = { new StringConverter() }
+            });
 
             object? value = await controller.ProcessRequestWithResponseAsync(method!);
 
@@ -157,6 +176,37 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.RabbitMQControllerBaseTest
 
             Assert.IsNotNull(value);
             Assert.IsTrue((int)value == arr.Sum());
+        }
+
+        [TestMethod]
+        public async Task ProcessRequestWithArgumentsAndResponseAsync_String_Test()
+        {
+            using TestRabbitMQController controller = new();
+
+            string[] arr = { "50", "200" };
+            var arrStr = JsonSerializer.Serialize(arr);
+
+            RabbitMQRequestData requestData = new()
+            {
+                Method = "TestMethodWithArgumentsAndResponseString",
+                Params = JsonSerializer.Deserialize<object[]>(arrStr)
+            };
+            BasicDeliverEventArgs eventArgs = new()
+            {
+                Body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(requestData))
+            };
+
+            MethodInfo? method = controller.GetMethodToExecute(eventArgs, new()
+            {
+                Converters = { new StringConverter() }
+            });
+
+            object? value = await controller.ProcessRequestWithResponseAsync(method!);
+
+            value = Convert.ChangeType(value, typeof(string));
+
+            Assert.IsNotNull(value);
+            Assert.IsTrue((string)value == arr[0] + arr[1]);
         }
 
         [TestMethod]
@@ -182,7 +232,10 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.RabbitMQControllerBaseTest
                 Body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(requestData))
             };
 
-            MethodInfo? method = controller.GetMethodToExecute(eventArgs);
+            MethodInfo? method = controller.GetMethodToExecute(eventArgs, new()
+            {
+                Converters = { new StringConverter() }
+            });
 
             object? value = await controller.ProcessRequestWithResponseAsync(method!);
 
@@ -231,6 +284,16 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.RabbitMQControllerBaseTest
         {
             return a + b;
         }
+
+        [RabbitMQMethod("TestMethodWithArgumentsAndResponseString")]
+#pragma warning disable CS1998 // В асинхронном методе отсутствуют операторы await, будет выполнен синхронный метод
+#pragma warning disable CA1822 // Пометьте члены как статические
+        public async Task<string> TestTaskMethodWithArgumentsAndResponseString(string a, string b)
+#pragma warning restore CA1822 // Пометьте члены как статические
+#pragma warning restore CS1998 // В асинхронном методе отсутствуют операторы await, будет выполнен синхронный метод
+        {
+            return a + b;
+        }
         [RabbitMQMethod("TestMethodWithClassAttr")]
 #pragma warning disable CS1998 // В асинхронном методе отсутствуют операторы await, будет выполнен синхронный метод
 #pragma warning disable CA1822 // Пометьте члены как статические
@@ -251,5 +314,33 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.RabbitMQControllerBaseTest
         {
             return Val1 + Val2;
         }
+    }
+
+    /// <summary>
+    /// Get it from <seealso cref="https://www.thecodebuzz.com/system-text-json-create-a-stringconverter-json-serialization/"/>
+    /// </summary>
+    public class StringConverter : JsonConverter<string>
+    {
+        public override string Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+
+            if (reader.TokenType == JsonTokenType.Number)
+            {
+                var stringValue = reader.GetInt32();
+                return stringValue.ToString();
+            }
+            else if (reader.TokenType == JsonTokenType.String)
+            {
+                return reader.GetString()!;
+            }
+
+            throw new JsonException();
+        }
+
+        public override void Write(Utf8JsonWriter writer, string value, JsonSerializerOptions options)
+        {
+            writer.WriteStringValue(value);
+        }
+
     }
 }

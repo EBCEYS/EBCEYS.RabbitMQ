@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Text;
 using EBCEYS.RabbitMQ.Configuration;
 using System.Text.Json.Serialization;
+using EBCEYS.RabbitMQ.Server.MappedService.Extensions;
 
 namespace EBCEYS.RabbitMQ.Server.Service
 {
@@ -29,7 +30,7 @@ namespace EBCEYS.RabbitMQ.Server.Service
             this.consumerAction = consumerAction;
             this.SerializerOptions = serializerOptions ?? new()
             {
-                Converters = { new JsonStringEnumConverter() },
+                Converters = { new JsonStringEnumConverter(), new JsonStringConverter() },
                 WriteIndented = false,
                 ReadCommentHandling = JsonCommentHandling.Skip,
                 AllowTrailingCommas = true,
