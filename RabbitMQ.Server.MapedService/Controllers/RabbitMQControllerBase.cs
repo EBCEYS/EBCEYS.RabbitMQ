@@ -1,9 +1,10 @@
-﻿using RabbitMQ.Client.Events;
-using EBCEYS.RabbitMQ.Server.MappedService.Attributes;
+﻿using EBCEYS.RabbitMQ.Server.MappedService.Attributes;
 using EBCEYS.RabbitMQ.Server.MappedService.Data;
 using EBCEYS.RabbitMQ.Server.MappedService.Exceptions;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using RabbitMQ.Client.Events;
 using System.Reflection;
-using System.Text.Json;
 
 namespace EBCEYS.RabbitMQ.Server.MappedService.Controllers
 {
@@ -15,7 +16,7 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Controllers
     {
         private BaseRabbitMQRequest? request;
         public IEnumerable<MethodInfo>? RabbitMQMethods { get; private set; }
-        private JsonSerializerOptions? SerializerOptions { get; set; }
+        private JsonSerializerSettings? SerializerOptions { get; set; }
         public RabbitMQControllerBase()
         {
             SetControllerMethods();
@@ -33,7 +34,7 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Controllers
             return methods.Where(m => (m.GetCustomAttribute(typeof(RabbitMQMethod)) as RabbitMQMethod) != null);
         }
 
-        public MethodInfo? GetMethodToExecute(BasicDeliverEventArgs eventArgs, JsonSerializerOptions? serializerOptions = null)
+        public MethodInfo? GetMethodToExecute(BasicDeliverEventArgs eventArgs, JsonSerializerSettings? serializerOptions = null)
         {
             if (eventArgs is null)
             {
@@ -117,8 +118,15 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Controllers
             List<object> arguments = new();
             for (int i = 0; i < methodArgs.Length; i++)
             {
-                object argument = JsonSerializer.Deserialize(request!.RequestData!.Params[i]!.ToString()!, methodArgs[i].ParameterType, SerializerOptions)!;
-                arguments.Add(argument);
+                if (request.RequestData.Params[i] is JObject)
+                {
+                    request.RequestData.Params[i] = JsonConvert.DeserializeObject(request.RequestData.Params[i].ToString()!, methodArgs[i].ParameterType)!;
+                }
+                if (request.RequestData.Params[i] is JArray)
+                {
+                    request.RequestData.Params[i] = JArray.Parse(request.RequestData.Params[i].ToString()!)!.ToObject(methodArgs[i].ParameterType)!;
+                }
+                arguments.Add(request.RequestData.Params[i]);
             }
 
             return arguments.ToArray();

@@ -1,12 +1,10 @@
-﻿using Microsoft.Extensions.Hosting;
+﻿using EBCEYS.RabbitMQ.Configuration;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using System.Text.Json;
 using System.Text;
-using EBCEYS.RabbitMQ.Configuration;
-using System.Text.Json.Serialization;
-using EBCEYS.RabbitMQ.Server.MappedService.Extensions;
 
 namespace EBCEYS.RabbitMQ.Server.Service
 {
@@ -19,23 +17,16 @@ namespace EBCEYS.RabbitMQ.Server.Service
         private readonly RabbitMQConfiguration configuration;
         private AsyncEventHandler<BasicDeliverEventArgs>? consumerAction;
 
-        public JsonSerializerOptions? SerializerOptions { get; private set; }
+        public JsonSerializerSettings? SerializerOptions { get; private set; }
 
         public RabbitMQServer(ILogger<RabbitMQServer> logger, 
             RabbitMQConfiguration configuration, 
-            AsyncEventHandler<BasicDeliverEventArgs>? consumerAction = null, 
-            JsonSerializerOptions? serializerOptions = null)
+            AsyncEventHandler<BasicDeliverEventArgs>? consumerAction = null,
+            JsonSerializerSettings? serializerOptions = null)
         {
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             this.consumerAction = consumerAction;
-            this.SerializerOptions = serializerOptions ?? new()
-            {
-                Converters = { new JsonStringEnumConverter(), new JsonStringConverter() },
-                WriteIndented = false,
-                ReadCommentHandling = JsonCommentHandling.Skip,
-                AllowTrailingCommas = true,
-                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-            };
+            this.SerializerOptions = serializerOptions;
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             connection = this.configuration.Factory!.CreateConnection();
             channel = connection.CreateModel();
@@ -124,11 +115,6 @@ namespace EBCEYS.RabbitMQ.Server.Service
             {
                 throw new ArgumentNullException(nameof(response));
             }
-
-            if (SerializerOptions is null)
-            {
-                throw new Exception($"{nameof(SerializerOptions)} is null! Can not serialize response!");
-            }
             await Task.Run(() =>
             {
                 try
@@ -136,7 +122,7 @@ namespace EBCEYS.RabbitMQ.Server.Service
                     IBasicProperties replyProps = channel.CreateBasicProperties();
                     replyProps.CorrelationId = ea.BasicProperties.CorrelationId;
 
-                    byte[] resp = JsonSerializer.SerializeToUtf8Bytes(response, SerializerOptions);
+                    byte[] resp = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(response, SerializerOptions));
 
                     logger.LogInformation("On request {id} response is {resp}", replyProps.CorrelationId, Encoding.UTF8.GetString(resp));
 

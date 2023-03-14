@@ -1,11 +1,10 @@
-using RabbitMQ.Client.Events;
 using EBCEYS.RabbitMQ.Server.MappedService.Attributes;
 using EBCEYS.RabbitMQ.Server.MappedService.Controllers;
 using EBCEYS.RabbitMQ.Server.MappedService.Data;
+using Newtonsoft.Json;
+using RabbitMQ.Client.Events;
 using System.Reflection;
 using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace EBCEYS.RabbitMQ.Server.MappedService.RabbitMQControllerBaseTest
 {
@@ -44,13 +43,10 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.RabbitMQControllerBaseTest
             };
             BasicDeliverEventArgs eventArgs = new()
             {
-                Body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(requestData))
+                Body = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(requestData))
             };
 
-            MethodInfo? method = controller.GetMethodToExecute(eventArgs, new()
-            {
-                Converters = { new StringConverter() }
-            });
+            MethodInfo? method = controller.GetMethodToExecute(eventArgs);
             Assert.IsNotNull(method);
         }
         [TestMethod]
@@ -64,13 +60,10 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.RabbitMQControllerBaseTest
             };
             BasicDeliverEventArgs eventArgs = new()
             {
-                Body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(requestData))
+                Body = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(requestData))
             };
 
-            MethodInfo? method = controller.GetMethodToExecute(eventArgs, new()
-            {
-                Converters = { new StringConverter() }
-            });
+            MethodInfo? method = controller.GetMethodToExecute(eventArgs);
             Assert.IsNull(method);
         }
         [TestMethod]
@@ -84,13 +77,10 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.RabbitMQControllerBaseTest
             };
             BasicDeliverEventArgs eventArgs = new()
             {
-                Body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(requestData))
+                Body = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(requestData))
             };
 
-            MethodInfo? method = controller.GetMethodToExecute(eventArgs, new()
-            {
-                Converters = { new StringConverter() }
-            });
+            MethodInfo? method = controller.GetMethodToExecute(eventArgs);
 
             await controller.ProcessRequestAsync(method!);
 
@@ -107,43 +97,37 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.RabbitMQControllerBaseTest
             };
             BasicDeliverEventArgs eventArgs = new()
             {
-                Body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(requestData))
+                Body = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(requestData))
             };
 
-            MethodInfo? method = controller.GetMethodToExecute(eventArgs, new()
-            {
-                Converters = { new StringConverter() }
-            });
+            MethodInfo? method = controller.GetMethodToExecute(eventArgs);
 
             object? value = await controller.ProcessRequestWithResponseAsync(method!);
 
-            value = Convert.ChangeType(value, typeof(int));
+            value = Convert.ChangeType(value, typeof(long));
 
             Assert.IsNotNull(value);
-            Assert.IsTrue((int)value == 0);
+            Assert.IsTrue((long)value == 0);
         }
         [TestMethod]
         public async Task ProcessRequestWithArgumentsAsyncTest()
         {
             using TestRabbitMQController controller = new();
 
-            int[] arr = { 100, 200 };
-            var arrStr = JsonSerializer.Serialize(arr);
+            long[] arr = { 100, 200 };
+            var arrStr = JsonConvert.SerializeObject(arr);
 
             RabbitMQRequestData requestData = new()
             {
                 Method = "TestMethodWithArguments",
-                Params = JsonSerializer.Deserialize<object[]>(arrStr)
+                Params = JsonConvert.DeserializeObject<object[]>(arrStr)
             };
             BasicDeliverEventArgs eventArgs = new()
             {
-                Body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(requestData))
+                Body = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(requestData))
             };
 
-            MethodInfo? method = controller.GetMethodToExecute(eventArgs, new()
-            {
-                Converters = { new StringConverter() }
-            });
+            MethodInfo? method = controller.GetMethodToExecute(eventArgs);
 
             await controller.ProcessRequestAsync(method!);
         }
@@ -152,30 +136,27 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.RabbitMQControllerBaseTest
         {
             using TestRabbitMQController controller = new();
 
-            int[] arr = { 50, 200 };
-            var arrStr = JsonSerializer.Serialize(arr);
+            long[] arr = { 50, 200 };
+            var arrStr = JsonConvert.SerializeObject(arr);
 
             RabbitMQRequestData requestData = new()
             {
                 Method = "TestMethodWithArgumentsAndResponse",
-                Params = JsonSerializer.Deserialize<object[]>(arrStr)
+                Params = JsonConvert.DeserializeObject<object[]>(arrStr)
             };
             BasicDeliverEventArgs eventArgs = new()
             {
-                Body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(requestData))
+                Body = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(requestData))
             };
 
-            MethodInfo? method = controller.GetMethodToExecute(eventArgs, new()
-            {
-                Converters = { new StringConverter() }
-            });
+            MethodInfo? method = controller.GetMethodToExecute(eventArgs);
 
             object? value = await controller.ProcessRequestWithResponseAsync(method!);
 
-            value = Convert.ChangeType(value, typeof(int));
+            value = Convert.ChangeType(value, typeof(long));
 
             Assert.IsNotNull(value);
-            Assert.IsTrue((int)value == arr.Sum());
+            Assert.IsTrue((long)value == arr.Sum());
         }
 
         [TestMethod]
@@ -184,22 +165,19 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.RabbitMQControllerBaseTest
             using TestRabbitMQController controller = new();
 
             string[] arr = { "50", "200" };
-            var arrStr = JsonSerializer.Serialize(arr);
+            var arrStr = JsonConvert.SerializeObject(arr);
 
             RabbitMQRequestData requestData = new()
             {
                 Method = "TestMethodWithArgumentsAndResponseString",
-                Params = JsonSerializer.Deserialize<object[]>(arrStr)
+                Params = JsonConvert.DeserializeObject<object[]>(arrStr)
             };
             BasicDeliverEventArgs eventArgs = new()
             {
-                Body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(requestData))
+                Body = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(requestData))
             };
 
-            MethodInfo? method = controller.GetMethodToExecute(eventArgs, new()
-            {
-                Converters = { new StringConverter() }
-            });
+            MethodInfo? method = controller.GetMethodToExecute(eventArgs);
 
             object? value = await controller.ProcessRequestWithResponseAsync(method!);
 
@@ -219,30 +197,96 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.RabbitMQControllerBaseTest
                 Val1 = 1,
                 Val2 = 2
             };
-            TestAtr[] arr = new[] { atr };
-            string arrStr = JsonSerializer.Serialize(arr);
 
             RabbitMQRequestData requestData = new()
             {
                 Method = "TestMethodWithClassAttr",
-                Params = JsonSerializer.Deserialize<object[]>(arrStr)
+                Params = new[] {atr}
             };
             BasicDeliverEventArgs eventArgs = new()
             {
-                Body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(requestData))
+                Body = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(requestData))
             };
 
-            MethodInfo? method = controller.GetMethodToExecute(eventArgs, new()
-            {
-                Converters = { new StringConverter() }
-            });
+            MethodInfo? method = controller.GetMethodToExecute(eventArgs);
 
             object? value = await controller.ProcessRequestWithResponseAsync(method!);
 
-            value = Convert.ChangeType(value, typeof(int));
+            value = Convert.ChangeType(value, typeof(long));
 
             Assert.IsNotNull(value);
-            Assert.IsTrue(((int)value) == atr.Sum());
+            Assert.IsTrue(((long)value) == atr.Sum());
+        }
+
+        [TestMethod]
+        public async Task ProcessRequestWithClassArrayTest()
+        {
+            using TestRabbitMQController controller = new();
+
+            TestAtr atr = new()
+            {
+                Val1 = 1,
+                Val2 = 2
+            };
+            TestAtr atr2 = new()
+            {
+                Val1 = 1,
+                Val2 = 2
+            };
+
+            RabbitMQRequestData requestData = new()
+            {
+                Method = "TestMethodWithClassAttrArray",
+                Params = new[] { new TestAtr[] { atr, atr2 } }
+            };
+            BasicDeliverEventArgs eventArgs = new()
+            {
+                Body = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(requestData))
+            };
+
+            MethodInfo? method = controller.GetMethodToExecute(eventArgs);
+
+            object? value = await controller.ProcessRequestWithResponseAsync(method!);
+
+            value = Convert.ChangeType(value, typeof(long));
+
+            Assert.IsNotNull(value);
+            Assert.IsTrue(((long)value) == atr.Sum() + atr2.Sum());
+        }
+        [TestMethod]
+        public async Task ProcessRequestWithClassTwoArraysTest()
+        {
+            using TestRabbitMQController controller = new();
+
+            TestAtr atr = new()
+            {
+                Val1 = 1,
+                Val2 = 2
+            };
+            TestAtr atr2 = new()
+            {
+                Val1 = 1,
+                Val2 = 2
+            };
+
+            RabbitMQRequestData requestData = new()
+            {
+                Method = "TestMethodWithClassAttrTwoArrays",
+                Params = new[] { new TestAtr[] { atr, atr2 }, new TestAtr[] { atr } }
+            };
+            BasicDeliverEventArgs eventArgs = new()
+            {
+                Body = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(requestData))
+            };
+
+            MethodInfo? method = controller.GetMethodToExecute(eventArgs);
+
+            object? value = await controller.ProcessRequestWithResponseAsync(method!);
+
+            value = Convert.ChangeType(value, typeof(long));
+
+            Assert.IsNotNull(value);
+            Assert.IsTrue(((long)value) == atr.Sum() + atr2.Sum() + atr.Sum());
         }
     }
 
@@ -261,7 +305,7 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.RabbitMQControllerBaseTest
         }
         [RabbitMQMethod("TestMethodWithResponse")]
 #pragma warning disable CA1822 // Пометьте члены как статические
-        public async Task<int> TestTaskMethodWithResponse()
+        public async Task<long> TestTaskMethodWithResponse()
 #pragma warning restore CA1822 // Пометьте члены как статические
         {
             await Task.Delay(600);
@@ -269,16 +313,16 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.RabbitMQControllerBaseTest
         }
         [RabbitMQMethod("TestMethodWithArguments")]
 #pragma warning disable CA1822 // Пометьте члены как статические
-        public async Task TestTaskMethodWithArguments(int a, int b)
+        public async Task TestTaskMethodWithArguments(long a, long b)
 #pragma warning restore CA1822 // Пометьте члены как статические
         {
-            await Task.Delay(a);
-            await Task.Delay(b);
+            await Task.Delay(Convert.ToInt32(a));
+            await Task.Delay(Convert.ToInt32(b));
         }
         [RabbitMQMethod("TestMethodWithArgumentsAndResponse")]
 #pragma warning disable CS1998 // В асинхронном методе отсутствуют операторы await, будет выполнен синхронный метод
 #pragma warning disable CA1822 // Пометьте члены как статические
-        public async Task<int> TestTaskMethodWithArgumentsAndResponse(int a, int b)
+        public async Task<long> TestTaskMethodWithArgumentsAndResponse(long a, long b)
 #pragma warning restore CA1822 // Пометьте члены как статические
 #pragma warning restore CS1998 // В асинхронном методе отсутствуют операторы await, будет выполнен синхронный метод
         {
@@ -297,50 +341,40 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.RabbitMQControllerBaseTest
         [RabbitMQMethod("TestMethodWithClassAttr")]
 #pragma warning disable CS1998 // В асинхронном методе отсутствуют операторы await, будет выполнен синхронный метод
 #pragma warning disable CA1822 // Пометьте члены как статические
-        public async Task<int> TestTaskMethodWithArgumentsAndResponse(TestAtr atr)
+        public async Task<long> TestTaskMethodWithArgumentsAndResponse(TestAtr atr)
 #pragma warning restore CA1822 // Пометьте члены как статические
 #pragma warning restore CS1998 // В асинхронном методе отсутствуют операторы await, будет выполнен синхронный метод
         {
             return atr.Sum();
         }
+        [RabbitMQMethod("TestMethodWithClassAttrArray")]
+#pragma warning disable CS1998 // В асинхронном методе отсутствуют операторы await, будет выполнен синхронный метод
+#pragma warning disable CA1822 // Пометьте члены как статические
+        public async Task<long> TestTaskMethodWithArgumentsAndResponseArray(TestAtr[] atrs)
+#pragma warning restore CA1822 // Пометьте члены как статические
+#pragma warning restore CS1998 // В асинхронном методе отсутствуют операторы await, будет выполнен синхронный метод
+        {
+            return atrs.Sum(s => s.Sum());
+        }
+        [RabbitMQMethod("TestMethodWithClassAttrTwoArrays")]
+#pragma warning disable CS1998 // В асинхронном методе отсутствуют операторы await, будет выполнен синхронный метод
+#pragma warning disable CA1822 // Пометьте члены как статические
+        public async Task<long> TestTaskMethodWithArgumentsAndResponseTwoArrays(TestAtr[] atrs, TestAtr[] atr)
+#pragma warning restore CA1822 // Пометьте члены как статические
+#pragma warning restore CS1998 // В асинхронном методе отсутствуют операторы await, будет выполнен синхронный метод
+        {
+            return atrs.Sum(s => s.Sum()) + atr.Sum(s => s.Sum());
+        }
     }
 
-    internal class TestAtr
+    public class TestAtr
     {
-        public int Val1 { get; set; }
-        public int Val2 { get; set; }
+        public long Val1 { get; set; }
+        public long Val2 { get; set; }
 
-        public int Sum()
+        public long Sum()
         {
             return Val1 + Val2;
         }
-    }
-
-    /// <summary>
-    /// Get it from <seealso cref="https://www.thecodebuzz.com/system-text-json-create-a-stringconverter-json-serialization/"/>
-    /// </summary>
-    public class StringConverter : JsonConverter<string>
-    {
-        public override string Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-        {
-
-            if (reader.TokenType == JsonTokenType.Number)
-            {
-                var stringValue = reader.GetInt32();
-                return stringValue.ToString();
-            }
-            else if (reader.TokenType == JsonTokenType.String)
-            {
-                return reader.GetString()!;
-            }
-
-            throw new JsonException();
-        }
-
-        public override void Write(Utf8JsonWriter writer, string value, JsonSerializerOptions options)
-        {
-            writer.WriteStringValue(value);
-        }
-
     }
 }

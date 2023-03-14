@@ -3,12 +3,11 @@ using EBCEYS.RabbitMQ.Server.MappedService.Data;
 using EBCEYS.RabbitMQ.Server.MappedService.Exceptions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Collections.Concurrent;
 using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace EBCEYS.RabbitMQ.Client
 {
@@ -17,7 +16,7 @@ namespace EBCEYS.RabbitMQ.Client
         private readonly ILogger logger;
         private readonly RabbitMQConfiguration configuration;
         private readonly TimeSpan? requestsTimeout;
-        private readonly JsonSerializerOptions? serializerOptions;
+        private readonly JsonSerializerSettings? serializerOptions;
         private readonly ConnectionFactory factory;
         private readonly IConnection connection;
         private readonly IModel channel;
@@ -30,19 +29,12 @@ namespace EBCEYS.RabbitMQ.Client
 
         private readonly ConcurrentDictionary<string, RabbitMQClientResponse> ResponseDictionary = new();
 
-        public RabbitMQClient(ILogger<RabbitMQClient> logger, RabbitMQConfiguration configuration, TimeSpan? requestsTimeout = null, JsonSerializerOptions? serializerOptions = null)
+        public RabbitMQClient(ILogger<RabbitMQClient> logger, RabbitMQConfiguration configuration, TimeSpan? requestsTimeout = null, JsonSerializerSettings? serializerOptions = null)
         {
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             this.requestsTimeout = requestsTimeout;
-            this.serializerOptions = serializerOptions ?? new()
-            {
-                Converters = { new JsonStringEnumConverter() },
-                WriteIndented = false,
-                ReadCommentHandling = JsonCommentHandling.Skip,
-                AllowTrailingCommas = true,
-                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-            };
+            this.serializerOptions = serializerOptions;
             factory = configuration.Factory ?? throw new ArgumentException(nameof(configuration.Factory));
 
             connection = factory.CreateConnection();
@@ -51,7 +43,7 @@ namespace EBCEYS.RabbitMQ.Client
             nonRPCProps = channel.CreateBasicProperties();
         }
 
-        public RabbitMQClient(ILogger logger, Func<RabbitMQConfiguration> configurationFunction, TimeSpan? requestsTimeout = null, JsonSerializerOptions? serializerOptions = null)
+        public RabbitMQClient(ILogger logger, Func<RabbitMQConfiguration> configurationFunction, TimeSpan? requestsTimeout = null, JsonSerializerSettings? serializerOptions = null)
         {
             if (configurationFunction is null)
             {
@@ -61,14 +53,7 @@ namespace EBCEYS.RabbitMQ.Client
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.configuration = configurationFunction!.Invoke() ?? throw new ArgumentNullException(nameof(configurationFunction));
             this.requestsTimeout = requestsTimeout;
-            this.serializerOptions = serializerOptions ?? new()
-            {
-                Converters = { new JsonStringEnumConverter() },
-                WriteIndented = false,
-                ReadCommentHandling = JsonCommentHandling.Skip,
-                AllowTrailingCommas = true,
-                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-            };
+            this.serializerOptions = serializerOptions;
             factory = configuration.Factory ?? throw new ArgumentException(nameof(configuration.Factory));
 
             connection = factory.CreateConnection();
@@ -91,7 +76,7 @@ namespace EBCEYS.RabbitMQ.Client
                 }                
                 
                 channel.QueueDeclare(
-                    queue: configuration.QueueConfiguration.QueueName, 
+                    queue: configuration.QueueConfiguration!.QueueName, 
                     durable: configuration.QueueConfiguration.Durable, 
                     exclusive: configuration.QueueConfiguration.Exclusive, 
                     autoDelete: configuration.QueueConfiguration.AutoDelete, 
@@ -161,12 +146,12 @@ namespace EBCEYS.RabbitMQ.Client
             await Task.Run(() =>
             {
 
-                byte[] msg = JsonSerializer.SerializeToUtf8Bytes(data, serializerOptions);
+                byte[] msg = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(data, serializerOptions));
 
                 logger.LogDebug("Try to send message {msg}", Encoding.UTF8.GetString(msg));
 
                 string exchange = configuration.ExchangeConfiguration?.ExchangeName ?? "";
-                string queue = configuration.QueueConfiguration.QueueName;
+                string queue = configuration.QueueConfiguration!.QueueName!;
 
                 channel.BasicPublish(
                 exchange: exchange,
@@ -195,7 +180,7 @@ namespace EBCEYS.RabbitMQ.Client
             }
             return await Task.Run(() =>
             {
-                byte[] msg = JsonSerializer.SerializeToUtf8Bytes(data, serializerOptions);
+                byte[] msg = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(data, serializerOptions));
                 logger.LogDebug("Try to send request {msg}", Encoding.UTF8.GetString(msg));
 
                 GetRPCProps(out IBasicProperties props, out string correlationId);
@@ -207,7 +192,7 @@ namespace EBCEYS.RabbitMQ.Client
                 });
 
                 string exchange = configuration.ExchangeConfiguration?.ExchangeName ?? "";
-                string queue = configuration.QueueConfiguration.QueueName;
+                string queue = configuration.QueueConfiguration!.QueueName!;
 
                 channel.BasicPublish(
                     exchange: exchange,
@@ -220,7 +205,7 @@ namespace EBCEYS.RabbitMQ.Client
                 {
                     try
                     {
-                        return JsonSerializer.Deserialize<T?>(response.Response!, serializerOptions);
+                        return JsonConvert.DeserializeObject<T?>(response.Response!, serializerOptions);
                     }
                     catch (Exception ex)
                     {

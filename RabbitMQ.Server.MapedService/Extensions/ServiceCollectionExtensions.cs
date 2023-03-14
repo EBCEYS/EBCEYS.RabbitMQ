@@ -4,14 +4,14 @@ using EBCEYS.RabbitMQ.Server.MappedService.Controllers;
 using EBCEYS.RabbitMQ.Server.Service;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using RabbitMQ.Client.Events;
-using System.Text.Json;
 
 namespace EBCEYS.RabbitMQ.Server.MappedService.Extensions
 {
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection AddRabbitMQMappedServer(this IServiceCollection services, RabbitMQConfiguration config, JsonSerializerOptions? serializerOptions = null)
+        public static IServiceCollection AddRabbitMQMappedServer(this IServiceCollection services, RabbitMQConfiguration config, JsonSerializerSettings? serializerOptions = null)
         {
             if (config is null)
             {
@@ -27,7 +27,7 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Extensions
                 return sr.GetService<RabbitMQMappedServer>()!;
             });
         }
-        public static IServiceCollection AddRabbitMQServer(this IServiceCollection services, RabbitMQConfiguration config, AsyncEventHandler<BasicDeliverEventArgs> receiverAction, JsonSerializerOptions? serializerOptions = null)
+        public static IServiceCollection AddRabbitMQServer(this IServiceCollection services, RabbitMQConfiguration config, AsyncEventHandler<BasicDeliverEventArgs> receiverAction, JsonSerializerSettings? serializerOptions = null)
         {
             if (config is null)
             {
@@ -49,7 +49,7 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Extensions
             });
         }
 
-        public static IServiceCollection AddRabbitMQClient(this IServiceCollection services, RabbitMQConfiguration config, TimeSpan? requestTimeout = null, JsonSerializerOptions? serializerOptions = null)
+        public static IServiceCollection AddRabbitMQClient(this IServiceCollection services, RabbitMQConfiguration config, TimeSpan? requestTimeout = null, JsonSerializerSettings? serializerOptions = null)
         {
             if (config is null)
             {

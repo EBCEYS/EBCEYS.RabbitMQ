@@ -4,9 +4,9 @@ using EBCEYS.RabbitMQ.Server.Service;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using RabbitMQ.Client.Events;
 using System.Reflection;
-using System.Text.Json;
 
 namespace EBCEYS.RabbitMQ.Server.MappedService
 {
@@ -17,7 +17,7 @@ namespace EBCEYS.RabbitMQ.Server.MappedService
         private readonly ILogger logger;
         private readonly IServiceProvider serviceProvider;
 
-        public RabbitMQMappedServer(ILogger<RabbitMQMappedServer> logger, RabbitMQConfiguration config, IServiceProvider serviceProvider, JsonSerializerOptions? serializerOptions = null)
+        public RabbitMQMappedServer(ILogger<RabbitMQMappedServer> logger, RabbitMQConfiguration config, IServiceProvider serviceProvider, JsonSerializerSettings? serializerOptions = null)
         {
             if (config is null)
             {
@@ -56,7 +56,7 @@ namespace EBCEYS.RabbitMQ.Server.MappedService
                         continue;
                     }
                     ParameterInfo returnParam = method.ReturnParameter;
-                    if (returnParam.ParameterType == typeof(Task))
+                    if (returnParam.ParameterType == typeof(Task) || returnParam.ParameterType == typeof(void))
                     {
                         await c.ProcessRequestAsync(method);
                         break;
@@ -68,12 +68,12 @@ namespace EBCEYS.RabbitMQ.Server.MappedService
                         return;
                     }
                 }
-                Server.AckMessage(args);
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error on processing message! {@args}", args);
             }
+            Server.AckMessage(args);
         }
 
         public async Task StopAsync(CancellationToken cancellationToken)
