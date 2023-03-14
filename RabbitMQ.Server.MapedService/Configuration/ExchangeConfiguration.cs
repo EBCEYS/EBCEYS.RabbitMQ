@@ -5,9 +5,9 @@ namespace EBCEYS.RabbitMQ.Configuration
     public class ExchangeConfiguration
     {
         [Required]
-        public string ExchangeName { get; }
+        public string? ExchangeName { get; } = string.Empty;
         [Required]
-        public string ExchangeType { get; }
+        public string? ExchangeType { get; } = string.Empty;
         public bool Durable { get; } = false;
         public bool AutoDelete { get; } = false;
         public IDictionary<string, object>? Arguments { get; } = null;
@@ -28,6 +28,10 @@ namespace EBCEYS.RabbitMQ.Configuration
             Durable = durable;
             AutoDelete = autoDelete;
             Arguments = arguments;
+        }
+        public ExchangeConfiguration()
+        {
+            
         }
     }
 }

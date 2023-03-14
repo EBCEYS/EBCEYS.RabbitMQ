@@ -5,7 +5,7 @@ namespace EBCEYS.RabbitMQ.Configuration
     public class QueueConfiguration
     {
         [Required]
-        public string QueueName { get; }
+        public string? QueueName { get; } = string.Empty;
         public bool Durable { get; } = false;
         public bool Exclusive { get; } = false;
         public bool AutoDelete { get; } = false;
@@ -22,6 +22,10 @@ namespace EBCEYS.RabbitMQ.Configuration
             Exclusive = exclusive;
             AutoDelete = autoDelete;
             Arguments = arguments;
+        }
+        public QueueConfiguration()
+        {
+            
         }
     }
 }
