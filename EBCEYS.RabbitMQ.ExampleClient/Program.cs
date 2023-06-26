@@ -35,7 +35,7 @@ namespace EBCEYS.RabbitMQ.ExampleClient
                 RabbitMQRequestData request = new()
                 {
                     Method = "ExampleMethod",
-                    Params = new object[] { "asd", "asd" }
+                    Params = new object[] { "asd1", "asd2" }
                 };
                 logger.LogInformation("Request is {@request}", request);
                 string? result = await client.SendRequestAsync<string?>(request);

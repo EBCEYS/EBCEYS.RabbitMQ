@@ -1,6 +1,7 @@
 ﻿using EBCEYS.RabbitMQ.Client;
 using EBCEYS.RabbitMQ.Configuration;
 using EBCEYS.RabbitMQ.Server.MappedService.Controllers;
+using EBCEYS.RabbitMQ.Server.MappedService.SmartController;
 using EBCEYS.RabbitMQ.Server.Service;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -85,5 +86,15 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Extensions
         {
             return services.AddScoped<RabbitMQControllerBase, T>();
         }
+
+        public static IServiceCollection AddSmartRabbitMQController<T>(this IServiceCollection services, RabbitMQConfiguration configuration, JsonSerializerSettings? serializerOptions = null) where T : RabbitMQSmartControllerBase
+        {
+            return services.AddHostedService(sr =>
+            {
+                return RabbitMQSmartControllerBase.InitializeNewController<T>(configuration, sr, serializerOptions);
+            });
+        }
+
+
     }
 }

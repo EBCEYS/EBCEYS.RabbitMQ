@@ -1,15 +1,14 @@
 using EBCEYS.RabbitMQ.Configuration;
-using EBCEYS.RabbitMQ.ExampleService.Controllers;
+using EBCEYS.RabbitMQ.ExampleSmartController.Controllers;
 using EBCEYS.RabbitMQ.Server.MappedService.Extensions;
 using NLog;
 using NLog.Web;
 
-namespace EBCEYS.RabbitMQ.ExampleService
+namespace EBCEYS.RabbitMQ.ExampleSmartController
 {
     public class Program
     {
         private static RabbitMQConfigurationBuilder? configBuilder;
-        
         public static void Main(string[] args)
         {
             configBuilder = new();
@@ -23,23 +22,19 @@ namespace EBCEYS.RabbitMQ.ExampleService
 
             Logger logger = LogManager.Setup().LoadConfigurationFromFile("nlog.config").GetCurrentClassLogger();
 
-            RabbitMQConfiguration config = configBuilder.Build();
-
-            logger.Info("RabbitMQ config {@config}", config);
-
             IHost host = Host.CreateDefaultBuilder(args)
+                .ConfigureServices(services =>
+                {
+                    services.AddSmartRabbitMQController<TestController>(configBuilder.Build());
+                })
                 .UseNLog()
                 .ConfigureLogging(log =>
                 {
+                    log.ClearProviders();
                     log.AddNLog("nlog.config");
                 })
-                .ConfigureServices(services =>
-                {
-                    services.AddRabbitMQController<ExampleController>();
-
-                    services.AddRabbitMQMappedServer(config);
-                })
                 .Build();
+
             host.Run();
         }
     }

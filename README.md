@@ -54,8 +54,63 @@ host.Run();
 
 Для отправки "RPC" запросов используется метод SendRequestAsync.
 
+### EBCEYS.RabbitMQ.Server.MappedService.SmartController
+
+Аналогичен ```RabbitMQControllerBase```, только внутри себя содержит "сервер", принимающий сообщения из брокера.
+
+Пример использования:
+```cs
+private static RabbitMQConfigurationBuilder? configBuilder;
+public static void Main(string[] args)
+{
+    configBuilder = new();
+    configBuilder.AddConnectionFactory(new()
+    {
+        HostName = "Kuznetsovy-Server",
+        UserName = "ebcey1",
+        Password = "123"
+    });
+    configBuilder.AddQueueConfiguration(new("ExampleQueue", autoDelete: true));
+
+    Logger logger = LogManager.Setup().LoadConfigurationFromFile("nlog.config").GetCurrentClassLogger();
+
+    IHost host = Host.CreateDefaultBuilder(args)
+        .ConfigureServices(services =>
+        {
+            services.AddSmartRabbitMQController<TestController>(configBuilder.Build());
+        })
+        .UseNLog()
+        .ConfigureLogging(log =>
+        {
+            log.ClearProviders();
+            log.AddNLog("nlog.config");
+        })
+        .Build();
+
+    host.Run();
+}
+
+internal class TestController : RabbitMQSmartControllerBase
+{
+    private readonly ILogger<TestController> logger;
+
+    public TestController(ILogger<TestController> logger)
+    {
+        this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+    [RabbitMQMethod("ExampleMethod")]
+    public async Task<string> TestMethod2(string a, string b)
+    {
+        logger.LogInformation("TestMethod2 get command with args: a: {a}\tb: {b}", a, b);
+        return await Task.FromResult(a + b);
+    }
+}
+```
 
 ## Изменения
+### v1.3.0
+1) Добавлен новый тип контроллера ```RabbitMQSmartController```.
+Данный контроллер содержит в себе сервер, принимающий сообщения из брокера сообщений и вызывающий методы, указанные внутри сообщения.
 ### v1.2.0
 1) Так как использование Microsoft.Text.Json вызывало ошибки в работе контроллера - было принято решение перейти на Newtownsoft.Json.
 2) В случае если возникли ошибки во время обработки сообщения/запроса, сообщение будет приниматься.
