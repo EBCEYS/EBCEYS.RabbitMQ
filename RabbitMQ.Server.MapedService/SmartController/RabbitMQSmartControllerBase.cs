@@ -25,7 +25,7 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.SmartController
 
         public static T InitializeNewController<T>(RabbitMQConfiguration config, IServiceProvider serviceProvider, JsonSerializerSettings? serializerSettings = null) where T : RabbitMQSmartControllerBase
         {
-            ConstructorInfo constructor = typeof(T).GetConstructors().FirstOrDefault() ?? throw new Exception($"Service {typeof(T).Name} has not constructor!");
+            ConstructorInfo constructor = typeof(T).GetConstructors().FirstOrDefault() ?? throw new Exception($"Service {typeof(T).Name} has no constructor!");
             ParameterInfo[] parameters = constructor.GetParameters();
             List<object> inputParameters = new();
             inputParameters.AddRange(parameters.Select(p => serviceProvider!.GetService(p.ParameterType)!));

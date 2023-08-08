@@ -18,9 +18,9 @@ namespace EBCEYS.RabbitMQ.Client
         private readonly TimeSpan? requestsTimeout;
         private readonly JsonSerializerSettings? serializerOptions;
         private readonly ConnectionFactory factory;
-        private readonly IConnection connection;
-        private readonly IModel channel;
-        private readonly IBasicProperties nonRPCProps;
+        private IConnection? connection;
+        private IModel? channel;
+        private IBasicProperties? nonRPCProps;
 
 
         private string? replyQueueName;
@@ -36,11 +36,6 @@ namespace EBCEYS.RabbitMQ.Client
             this.requestsTimeout = requestsTimeout;
             this.serializerOptions = serializerOptions;
             factory = configuration.Factory ?? throw new ArgumentException(nameof(configuration.Factory));
-
-            connection = factory.CreateConnection();
-            channel = connection.CreateModel();
-
-            nonRPCProps = channel.CreateBasicProperties();
         }
 
         public RabbitMQClient(ILogger logger, Func<RabbitMQConfiguration> configurationFunction, TimeSpan? requestsTimeout = null, JsonSerializerSettings? serializerOptions = null)
@@ -55,18 +50,17 @@ namespace EBCEYS.RabbitMQ.Client
             this.requestsTimeout = requestsTimeout;
             this.serializerOptions = serializerOptions;
             factory = configuration.Factory ?? throw new ArgumentException(nameof(configuration.Factory));
-
-            connection = factory.CreateConnection();
-            channel = connection.CreateModel();
-
-            nonRPCProps = channel.CreateBasicProperties();
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             await Task.Run(() => 
-            { 
-                if(configuration.ExchangeConfiguration is not null)
+            {
+                connection = factory.CreateConnection();
+                channel = connection.CreateModel();
+                nonRPCProps = channel.CreateBasicProperties();
+
+                if (configuration.ExchangeConfiguration is not null)
                 {
                     channel.ExchangeDeclare(configuration.ExchangeConfiguration.ExchangeName,
                             configuration.ExchangeConfiguration.ExchangeType,
@@ -111,7 +105,7 @@ namespace EBCEYS.RabbitMQ.Client
                         value.Response = body;
                         value.Event!.Set();
                         logger.LogDebug("Set event!");
-                        channel.BasicAck(ea.DeliveryTag, false);
+                        channel!.BasicAck(ea.DeliveryTag, false);
                     }
                 }
             });
@@ -123,7 +117,7 @@ namespace EBCEYS.RabbitMQ.Client
             {
                 try
                 {
-                    connection.Close();
+                    connection?.Close();
                 }
                 catch(Exception ex)
                 {
@@ -137,9 +131,9 @@ namespace EBCEYS.RabbitMQ.Client
         /// </summary>
         /// <param name="data">The data to send.</param>
         /// <returns>Task.</returns>
-        public async Task SendMessageAsync(RabbitMQRequestData data)
+        public virtual async Task SendMessageAsync(RabbitMQRequestData data)
         {
-            if (!connection.IsOpen || !channel.IsOpen)
+            if (!connection!.IsOpen || !channel!.IsOpen)
             {
                 throw new RabbitMQClientException("Connection is not opened!");
             }
@@ -168,9 +162,9 @@ namespace EBCEYS.RabbitMQ.Client
         /// <param name="data">The data to send.</param>
         /// <returns>Response data or default if timeout.</returns>
         /// <exception cref="RabbitMQClientException"></exception>
-        public async Task<T?> SendRequestAsync<T>(RabbitMQRequestData data)
+        public virtual async Task<T?> SendRequestAsync<T>(RabbitMQRequestData data)
         {
-            if (!connection.IsOpen || !channel.IsOpen)
+            if (!connection!.IsOpen || !channel!.IsOpen)
             {
                 throw new RabbitMQClientException("Connection is not opened!");
             }
@@ -219,7 +213,7 @@ namespace EBCEYS.RabbitMQ.Client
 
         private void GetRPCProps(out IBasicProperties props, out string correlationId)
         {
-            props = channel.CreateBasicProperties();
+            props = channel!.CreateBasicProperties();
             correlationId = Guid.NewGuid().ToString();
             props.CorrelationId = correlationId;
             props.ReplyTo = replyQueueName;
@@ -227,17 +221,17 @@ namespace EBCEYS.RabbitMQ.Client
 
         public void Dispose()
         {
-            connection.Close();
-            connection.Dispose();
-            channel.Dispose();
+            connection?.Close();
+            connection?.Dispose();
+            channel?.Dispose();
             GC.SuppressFinalize(this);
         }
 
         public ValueTask DisposeAsync()
         {
-            connection.Close();
-            connection.Dispose();
-            channel.Dispose();
+            connection?.Close();
+            connection?.Dispose();
+            channel?.Dispose();
             GC.SuppressFinalize(this);
             return ValueTask.CompletedTask;
         }
