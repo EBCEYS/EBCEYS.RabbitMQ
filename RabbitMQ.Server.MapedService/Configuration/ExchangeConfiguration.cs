@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using EBCEYS.RabbitMQ.Server.MappedService.Extensions;
+using System.ComponentModel.DataAnnotations;
 
 namespace EBCEYS.RabbitMQ.Configuration
 {
@@ -10,8 +11,10 @@ namespace EBCEYS.RabbitMQ.Configuration
         public string? ExchangeType { get; } = string.Empty;
         public bool Durable { get; } = false;
         public bool AutoDelete { get; } = false;
-        public IDictionary<string, object>? Arguments { get; } = null;
-        public ExchangeConfiguration(string exchangeName, string exchangeType, bool durable = false, bool autoDelete = false, IDictionary<string, object>? arguments = null)
+        public IDictionary<string, object?>? Arguments { get; } = null;
+        public bool Passive { get; } = false;
+        public bool NoWait { get; } = false;
+        public ExchangeConfiguration(string exchangeName, string exchangeType, bool durable = false, bool autoDelete = false, IDictionary<string, object?>? arguments = null, bool passive = false, bool noWait = false)
         {
             if (string.IsNullOrWhiteSpace(exchangeName))
             {
@@ -24,10 +27,27 @@ namespace EBCEYS.RabbitMQ.Configuration
             }
 
             ExchangeName = exchangeName;
-            ExchangeType = exchangeType;
+            ExchangeType = ExchangeTypeExtensions.ParseFromEnum(exchangeType.GetExchangeType());
             Durable = durable;
             AutoDelete = autoDelete;
             Arguments = arguments;
+            Passive = passive;
+            NoWait = noWait;
+        }
+        public ExchangeConfiguration(string exchangeName, ExchangeTypes exchangeType, bool durable = false, bool autoDelete = false, IDictionary<string, object?>? arguments = null, bool passive = false, bool noWait = false)
+        {
+            if (string.IsNullOrWhiteSpace(exchangeName))
+            {
+                throw new ArgumentException($"\"{nameof(exchangeName)}\" не может быть пустым или содержать только пробел.", nameof(exchangeName));
+            }
+
+            ExchangeName = exchangeName;
+            ExchangeType = ExchangeTypeExtensions.ParseFromEnum(exchangeType);
+            Durable = durable;
+            AutoDelete = autoDelete;
+            Arguments = arguments;
+            Passive = passive;
+            NoWait = noWait;
         }
         public ExchangeConfiguration()
         {

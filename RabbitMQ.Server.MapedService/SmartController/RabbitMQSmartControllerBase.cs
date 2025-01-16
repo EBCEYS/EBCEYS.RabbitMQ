@@ -13,9 +13,9 @@ using System.Reflection;
 
 namespace EBCEYS.RabbitMQ.Server.MappedService.SmartController
 {
-    public class RabbitMQSmartControllerBase : IHostedService
+    public abstract class RabbitMQSmartControllerBase : IHostedService
     {
-        public BaseRabbitMQRequest? request;
+        public BaseRabbitMQRequest? Request { get; private set; }
         private RabbitMQServer? server;
         private IServiceProvider? serviceProvider;
         private JsonSerializerSettings? serializerSettings;
@@ -25,13 +25,24 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.SmartController
 
         public static T InitializeNewController<T>(RabbitMQConfiguration config, IServiceProvider serviceProvider, JsonSerializerSettings? serializerSettings = null) where T : RabbitMQSmartControllerBase
         {
-            ConstructorInfo constructor = typeof(T).GetConstructors().FirstOrDefault() ?? throw new Exception($"Service {typeof(T).Name} has no constructor!");
-            ParameterInfo[] parameters = constructor.GetParameters();
-            List<object> inputParameters = new();
-            inputParameters.AddRange(parameters.Select(p => serviceProvider!.GetService(p.ParameterType)!));
-            T controller = (T)Activator.CreateInstance(typeof(T), inputParameters.Any() ? inputParameters.ToArray() : null)!;
-            controller.SetParams(config, serviceProvider, serializerSettings);
-            return controller;
+            foreach (ConstructorInfo constructor in typeof(T).GetConstructors())
+            {
+                try
+                {
+                    ParameterInfo[] parameters = constructor.GetParameters();
+                    IEnumerable<object?> inputParameters = parameters.Select(p => serviceProvider!.GetService(p.ParameterType));
+                    T controller = (T)Activator.CreateInstance(typeof(T), inputParameters.Any() ? inputParameters.ToArray() : null)!;
+                    controller.SetParams(config, serviceProvider, serializerSettings);
+                    return controller;
+                }
+                catch (Exception)
+                {
+                    continue;
+                }
+            }
+            T emptyController = (T)Activator.CreateInstance(typeof(T))!;
+            emptyController.SetParams(config, serviceProvider, serializerSettings);
+            return emptyController;
         }
 
         private static IEnumerable<MethodInfo> GetControllerMethods(Type controllerType)
@@ -78,8 +89,19 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.SmartController
             catch (Exception ex)
             {
                 logger!.LogError(ex, "Error on processing message!: {@msg}", args);
+                if (args.BasicProperties.ReplyToAddress is not null)
+                {
+                    try
+                    {
+                        await server!.SendResponseAsync<object?>(args, null);
+                    }
+                    catch (Exception responseEx)
+                    {
+                        logger!.LogError(responseEx, "Error on sending error response!: {@msg}", args);
+                    }
+                }
             }
-            server!.AckMessage(args);
+            await server!.AckMessage(args);
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
@@ -94,13 +116,10 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.SmartController
 
         private MethodInfo? GetMethodToExecute(BasicDeliverEventArgs eventArgs)
         {
-            if (eventArgs is null)
-            {
-                throw new ArgumentNullException(nameof(eventArgs));
-            }
-            request = new(eventArgs, serializerSettings);
+            ArgumentNullException.ThrowIfNull(eventArgs);
+            Request = new(eventArgs, serializerSettings);
 
-            return FindMethod(request.RequestData.Method);
+            return FindMethod(Request.RequestData.Method);
         }
 
         private MethodInfo? FindMethod(string? methodName)
@@ -115,42 +134,46 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.SmartController
 
         private async Task<object?> ProcessRequestWithResponseAsync(MethodInfo method)
         {
-            if (request is null)
+            if (Request is null)
             {
-                throw new InvalidOperationException(nameof(request) + " should be set!");
+                throw new InvalidOperationException(nameof(Request) + " should be set!");
             }
             ParameterInfo[] methodArgs = method.GetParameters();
-            if (request!.RequestData.Params is null || !request.RequestData.Params.Any())
+            if (Request!.RequestData.Params is null || Request.RequestData.Params.Length == 0)
             {
-                if (methodArgs.Length > 0)
+                using Task? t = method.Invoke(this, null) as Task;
+                if (t == null)
                 {
-                    throw new Exception("Method has no arguments but request contains it!");
+                    return null;
                 }
-                Task t = (Task)method.Invoke(this, null)!;
-                await t.ConfigureAwait(false);
+                await t;
                 return ((dynamic)t).Result;
             }
             else
             {
                 object[] arguments = GetArgumentsForMethod(methodArgs);
-                Task t = (Task)method.Invoke(this, arguments)!;
-                await t.ConfigureAwait(false);
+                using Task? t = method.Invoke(this, arguments) as Task;
+                if (t == null)
+                {
+                    return null;
+                }
+                await t;
                 return ((dynamic)t).Result;
             }
         }
 
         private async Task ProcessRequestAsync(MethodInfo method)
         {
-            if (request is null)
+            if (Request is null)
             {
-                throw new InvalidOperationException(nameof(request) + " should be set!");
+                throw new InvalidOperationException(nameof(Request) + " should be set!");
             }
             ParameterInfo[] methodArgs = method.GetParameters();
-            if (request!.RequestData.Params is null || !request.RequestData.Params.Any())
+            if (Request!.RequestData.Params is null || Request.RequestData.Params.Length == 0)
             {
                 if (methodArgs.Length > 0)
                 {
-                    throw new Exception("Method has no arguments but request contains it!");
+                    throw new RabbitMQControllerException("Method has arguments but request does not contains it!");
                 }
                 await (Task)method.Invoke(this, null)!;
             }
@@ -163,25 +186,25 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.SmartController
 
         private object[] GetArgumentsForMethod(ParameterInfo[] methodArgs)
         {
-            if (methodArgs.Length != request!.RequestData.Params!.Length)
+            if (methodArgs.Length != Request!.RequestData.Params!.Length)
             {
-                throw new RabbitMQControllerException("Request and method arguments are not equeal!");
+                throw new RabbitMQControllerException("Request and method arguments are not equal!");
             }
-            List<object> arguments = new();
+            List<object> arguments = [];
             for (int i = 0; i < methodArgs.Length; i++)
             {
-                if (request.RequestData.Params[i] is JObject)
+                if (Request.RequestData.Params[i] is JObject)
                 {
-                    request.RequestData.Params[i] = JsonConvert.DeserializeObject(request.RequestData.Params[i].ToString()!, methodArgs[i].ParameterType)!;
+                    Request.RequestData.Params[i] = JsonConvert.DeserializeObject(Request.RequestData.Params[i].ToString()!, methodArgs[i].ParameterType)!;
                 }
-                if (request.RequestData.Params[i] is JArray)
+                if (Request.RequestData.Params[i] is JArray)
                 {
-                    request.RequestData.Params[i] = JArray.Parse(request.RequestData.Params[i].ToString()!)!.ToObject(methodArgs[i].ParameterType)!;
+                    Request.RequestData.Params[i] = JArray.Parse(Request.RequestData.Params[i].ToString()!)!.ToObject(methodArgs[i].ParameterType)!;
                 }
-                arguments.Add(request.RequestData.Params[i]);
+                arguments.Add(Request.RequestData.Params[i]);
             }
 
-            return arguments.ToArray();
+            return [.. arguments];
         }
     }
 }

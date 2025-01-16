@@ -19,15 +19,9 @@ namespace EBCEYS.RabbitMQ.Server.MappedService
 
         public RabbitMQMappedServer(ILogger<RabbitMQMappedServer> logger, RabbitMQConfiguration config, IServiceProvider serviceProvider, JsonSerializerSettings? serializerOptions = null)
         {
-            if (config is null)
-            {
-                throw new ArgumentNullException(nameof(config));
-            }
+            ArgumentNullException.ThrowIfNull(config);
 
-            if (serviceProvider is null)
-            {
-                throw new ArgumentNullException(nameof(serviceProvider));
-            }
+            ArgumentNullException.ThrowIfNull(serviceProvider);
 
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.serviceProvider = serviceProvider;
@@ -73,7 +67,7 @@ namespace EBCEYS.RabbitMQ.Server.MappedService
             {
                 logger.LogError(ex, "Error on processing message! {@args}", args);
             }
-            Server.AckMessage(args);
+            await Server.AckMessage(args);
         }
 
         public async Task StopAsync(CancellationToken cancellationToken)

@@ -15,13 +15,13 @@ namespace EBCEYS.RabbitMQ.Client.Tests
             RabbitMQConfigurationBuilder configBuilder = new();
             configBuilder.AddConnectionFactory(new()
             {
-                HostName = "Kuznetsovy-Server",
-                UserName = "ebcey1",
-                Password = "123"
+                HostName = "localhost",
+                UserName = "guest",
+                Password = "guest",
+                Port = 5673
             });
             configBuilder.AddQueueConfiguration(new("TestQueue", autoDelete: true));
             using RabbitMQClient client = new(clientLogger, configBuilder.Build());
-            Assert.IsNotNull(client);
         }
 
         [TestMethod()]
@@ -32,14 +32,14 @@ namespace EBCEYS.RabbitMQ.Client.Tests
                 RabbitMQConfigurationBuilder configBuilder = new();
                 configBuilder.AddConnectionFactory(new()
                 {
-                    HostName = "Kuznetsovy-Server",
-                    UserName = "ebcey1",
-                    Password = "123"
+                    HostName = "localhost",
+                    UserName = "guest",
+                    Password = "guest",
+                    Port = 5673
                 });
                 configBuilder.AddQueueConfiguration(new("TestQueue", autoDelete: true));
                 return configBuilder.Build();
             });
-            Assert.IsNotNull(client);
         }
 
         [TestMethod()]
@@ -48,9 +48,10 @@ namespace EBCEYS.RabbitMQ.Client.Tests
             RabbitMQConfigurationBuilder configBuilder = new();
             configBuilder.AddConnectionFactory(new()
             {
-                HostName = "Kuznetsovy-Server",
-                UserName = "ebcey1",
-                Password = "123"
+                HostName = "localhost",
+                UserName = "guest",
+                Password = "guest",
+                Port = 5673
             });
             configBuilder.AddQueueConfiguration(new("TestQueue", autoDelete: true));
             using RabbitMQClient client = new(clientLogger, configBuilder.Build());
@@ -64,9 +65,10 @@ namespace EBCEYS.RabbitMQ.Client.Tests
             RabbitMQConfigurationBuilder configBuilder = new();
             configBuilder.AddConnectionFactory(new()
             {
-                HostName = "Kuznetsovy-Server",
-                UserName = "ebcey1",
-                Password = "123"
+                HostName = "localhost",
+                UserName = "guest",
+                Password = "guest",
+                Port = 5673
             });
             configBuilder.AddQueueConfiguration(new("TestQueue", autoDelete: true));
             RabbitMQClient client = new(clientLogger, configBuilder.Build());
@@ -81,9 +83,10 @@ namespace EBCEYS.RabbitMQ.Client.Tests
             RabbitMQConfigurationBuilder configBuilder = new();
             configBuilder.AddConnectionFactory(new()
             {
-                HostName = "Kuznetsovy-Server",
-                UserName = "ebcey1",
-                Password = "123"
+                HostName = "localhost",
+                UserName = "guest",
+                Password = "guest",
+                Port = 5673
             });
             configBuilder.AddQueueConfiguration(new("TestQueue", autoDelete:true));
             using RabbitMQClient client = new(clientLogger, configBuilder.Build());
@@ -102,9 +105,10 @@ namespace EBCEYS.RabbitMQ.Client.Tests
             RabbitMQConfigurationBuilder configBuilder = new();
             configBuilder.AddConnectionFactory(new()
             {
-                HostName = "Kuznetsovy-Server",
-                UserName = "ebcey1",
-                Password = "123"
+                HostName = "localhost",
+                UserName = "guest",
+                Password = "guest",
+                Port = 5673
             });
             configBuilder.AddQueueConfiguration(new("TestQueue", autoDelete: true));
             using RabbitMQClient client = new(clientLogger, configBuilder.Build(), TimeSpan.FromSeconds(1));
@@ -116,7 +120,7 @@ namespace EBCEYS.RabbitMQ.Client.Tests
                 Method = "TestMethod"
             });
 
-            Assert.IsTrue(result == default);
+            Assert.AreEqual(default, result);
         }
 
         [TestMethod()]
@@ -125,9 +129,10 @@ namespace EBCEYS.RabbitMQ.Client.Tests
             RabbitMQConfigurationBuilder configBuilder = new();
             configBuilder.AddConnectionFactory(new()
             {
-                HostName = "Kuznetsovy-Server",
-                UserName = "ebcey1",
-                Password = "123"
+                HostName = "localhost",
+                UserName = "guest",
+                Password = "guest",
+                Port = 5673
             });
             configBuilder.AddQueueConfiguration(new("TestQueue", autoDelete: true));
             RabbitMQClient client = new(clientLogger, configBuilder.Build());
@@ -140,9 +145,10 @@ namespace EBCEYS.RabbitMQ.Client.Tests
             RabbitMQConfigurationBuilder configBuilder = new();
             configBuilder.AddConnectionFactory(new()
             {
-                HostName = "Kuznetsovy-Server",
-                UserName = "ebcey1",
-                Password = "123"
+                HostName = "localhost",
+                UserName = "guest",
+                Password = "guest",
+                Port = 5673
             });
             configBuilder.AddQueueConfiguration(new("TestQueue", autoDelete: true));
             RabbitMQClient client = new(clientLogger, configBuilder.Build());

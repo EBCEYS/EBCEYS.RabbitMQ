@@ -1,0 +1,27 @@
+services:
+  ebceys.rabbitmq.exampledockerclient:
+    image: ${DOCKER_REGISTRY-}ebceysrabbitmqexampledockerclient
+    build:
+      context: .
+      dockerfile: DockerExamples/EBCEYS.RabbitMQ.ExampleDockerClient/Dockerfile
+    ports:
+      - "5001:3000"
+    depends_on:
+      - rabbitmq
+
+  ebceys.rabbitmq.exampledockerserver:
+    image: ${DOCKER_REGISTRY-}ebceysrabbitmqexampledockerserver
+    build:
+      context: .
+      dockerfile: DockerExamples/EBCEYS.RabbitMQ.ExampleDockerServer/Dockerfile
+    depends_on:
+      - rabbitmq
+
+  rabbitmq:
+    image: rabbitmq:4.0.5-management
+    container_name: 'rabbitmq'
+    ports:
+        - "5673:5672"
+        - "15673:15672"
+
+

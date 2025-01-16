@@ -12,6 +12,7 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Controllers
     /// Base controller class. <br/>
     /// Methods should be asynchronous only!
     /// </summary>
+    [Obsolete("It's better to use RabbitMQSmartControllerBase")]
     public abstract class RabbitMQControllerBase : IDisposable, IRabbitMQControllerBase
     {
         private BaseRabbitMQRequest? request;
@@ -36,10 +37,7 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Controllers
 
         public MethodInfo? GetMethodToExecute(BasicDeliverEventArgs eventArgs, JsonSerializerSettings? serializerOptions = null)
         {
-            if (eventArgs is null)
-            {
-                throw new ArgumentNullException(nameof(eventArgs));
-            }
+            ArgumentNullException.ThrowIfNull(eventArgs);
             SerializerOptions = serializerOptions;
             request = new(eventArgs, SerializerOptions);
 
@@ -68,7 +66,7 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Controllers
                 throw new InvalidOperationException(nameof(request) + " should be set!");
             }
             ParameterInfo[] methodArgs = method.GetParameters();
-            if (request!.RequestData.Params is null || !request.RequestData.Params.Any())
+            if (request!.RequestData.Params is null || request.RequestData.Params.Length == 0)
             {
                 if (methodArgs.Length > 0)
                 {
@@ -94,7 +92,7 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Controllers
                 throw new InvalidOperationException(nameof(request) + " should be set!");
             }
             ParameterInfo[] methodArgs = method.GetParameters();
-            if (request!.RequestData.Params is null || !request.RequestData.Params.Any())
+            if (request!.RequestData.Params is null || request.RequestData.Params.Length == 0)
             {
                 if (methodArgs.Length > 0)
                 {
@@ -115,7 +113,7 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Controllers
             {
                 throw new RabbitMQControllerException("Request and method arguments are not equeal!");
             }
-            List<object> arguments = new();
+            List<object> arguments = [];
             for (int i = 0; i < methodArgs.Length; i++)
             {
                 if (request.RequestData.Params[i] is JObject)
@@ -129,7 +127,7 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Controllers
                 arguments.Add(request.RequestData.Params[i]);
             }
 
-            return arguments.ToArray();
+            return [.. arguments];
         }
 
         public void Dispose()

@@ -1,4 +1,5 @@
 ﻿using EBCEYS.RabbitMQ.Configuration;
+using EBCEYS.RabbitMQ.Server.MappedService.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -10,10 +11,12 @@ namespace EBCEYS.RabbitMQ.Server.Service
 {
     public class RabbitMQServer : IHostedService, IAsyncDisposable, IDisposable
     {
-        private readonly IConnection connection;
-        private readonly IModel channel;
+        private readonly bool autoAck = true;
+
+        private IConnection? connection;
+        private IChannel? channel;
         private readonly ILogger<RabbitMQServer> logger;
-        public AsyncEventingBasicConsumer Consumer { get; private set; }
+        public AsyncEventingBasicConsumer? Consumer { get; private set; }
         private readonly RabbitMQConfiguration configuration;
         private AsyncEventHandler<BasicDeliverEventArgs>? consumerAction;
 
@@ -28,10 +31,6 @@ namespace EBCEYS.RabbitMQ.Server.Service
             this.consumerAction = consumerAction;
             this.SerializerOptions = serializerOptions;
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            connection = this.configuration.Factory!.CreateConnection();
-            channel = connection.CreateModel();
-            this.configuration = configuration;
-            Consumer = new(channel);
 
             this.logger.LogDebug("Create rabbitMQ server service!");
         }
@@ -42,10 +41,7 @@ namespace EBCEYS.RabbitMQ.Server.Service
             {
                 throw new InvalidOperationException("Consumer action is already set!");
             }
-            if (consumerAction is null)
-            {
-                throw new ArgumentNullException(nameof(consumerAction));
-            }
+            ArgumentNullException.ThrowIfNull(consumerAction);
             this.consumerAction = consumerAction;
             logger.LogDebug("Set consumer action!");
         }
@@ -56,29 +52,24 @@ namespace EBCEYS.RabbitMQ.Server.Service
             {
                 throw new Exception($"{nameof(configuration.QueueConfiguration)} is null!");
             }
-            await Task.Run(() => 
-            { 
-                if (configuration.ExchangeConfiguration is not null)
-                {
-                    channel.ExchangeDeclare(configuration.ExchangeConfiguration.ExchangeName, 
-                        configuration.ExchangeConfiguration.ExchangeType, 
-                        configuration.ExchangeConfiguration.Durable,
-                        configuration.ExchangeConfiguration.AutoDelete,
-                        configuration.ExchangeConfiguration.Arguments);
-                }
 
-                channel.BasicQos(0, 1, false);
-                channel.QueueDeclare(configuration.QueueConfiguration.QueueName, 
-                    configuration.QueueConfiguration.Durable, 
-                    configuration.QueueConfiguration.Exclusive, 
-                    configuration.QueueConfiguration.AutoDelete, 
-                    configuration.QueueConfiguration.Arguments);
+            connection = await configuration.Factory!.CreateConnectionAsync(cancellationToken);
+            channel = await connection.CreateChannelAsync(configuration.CreateChannelOptions, cancellationToken);
+            Consumer = new(channel);
 
-                Consumer.Received += consumerAction;
-                channel.BasicConsume(configuration.QueueConfiguration.QueueName, false, Consumer);
+            await channel.QueueDeclareAsync(configuration.QueueConfiguration!, cancellationToken);
+            if (configuration.ExchangeConfiguration is not null)
+            {
+                await channel.ExchangeDeclareAsync(configuration.ExchangeConfiguration, cancellationToken);
+                await channel.QueueBindAsync(configuration.QueueConfiguration!.QueueName!, configuration.ExchangeConfiguration?.ExchangeName ?? string.Empty, configuration.QueueConfiguration!.RoutingKey!, cancellationToken: cancellationToken);
+            }
 
-                logger.LogDebug("Consumer status on start: {status}", Consumer.IsRunning);
-            }, cancellationToken);
+            await channel.BasicQosAsync(0, 1, false, cancellationToken);
+
+            Consumer.ReceivedAsync += consumerAction;
+            await channel.BasicConsumeAsync(configuration.QueueConfiguration.QueueName, autoAck, Consumer, cancellationToken: cancellationToken);
+
+            logger.LogDebug("Consumer status on start: {status}", Consumer.IsRunning);
             logger.LogDebug("Start rabbitmq server!");
         }
         /// <summary>
@@ -86,15 +77,15 @@ namespace EBCEYS.RabbitMQ.Server.Service
         /// </summary>
         /// <param name="ea">The event args.</param>
         /// <exception cref="ArgumentNullException"></exception>
-        public void AckMessage(BasicDeliverEventArgs ea)
+        public async Task AckMessage(BasicDeliverEventArgs ea, CancellationToken token = default)
         {
-            if (ea is null)
+            if (!autoAck)
             {
-                throw new ArgumentNullException(nameof(ea));
-            }
+                ArgumentNullException.ThrowIfNull(ea);
 
-            logger.LogDebug("Ack message: {tag}", ea.DeliveryTag);
-            channel.BasicAck(ea.DeliveryTag, false);
+                logger.LogDebug("Ack message: {tag}", ea.DeliveryTag);
+                await channel!.BasicAckAsync(ea.DeliveryTag, false, token);
+            }
         }
         /// <summary>
         /// Sends the response. Uses with RPC configuration.
@@ -104,73 +95,78 @@ namespace EBCEYS.RabbitMQ.Server.Service
         /// <returns></returns>
         /// <exception cref="ArgumentNullException"></exception>
         /// <exception cref="Exception"></exception>
-        public async Task SendResponseAsync(BasicDeliverEventArgs ea, object response)
+        /// <exception cref="InvalidOperationException"></exception>
+        public async Task SendResponseAsync<T>(BasicDeliverEventArgs ea, T response)
         {
-            if (ea is null)
+            ArgumentNullException.ThrowIfNull(ea);
+
+            if (ea.BasicProperties.ReplyToAddress is null)
             {
-                throw new ArgumentNullException(nameof(ea));
+                throw new InvalidOperationException("Event args do not contains ReplyTo params!");
             }
-
-            if (response is null)
+            try
             {
-                throw new ArgumentNullException(nameof(response));
+                BasicProperties replyProps = new()
+                {
+                    ContentType = "application/json",
+                    ContentEncoding = "UTF-8",
+                    CorrelationId = ea.BasicProperties.CorrelationId,
+                };
+                string json = response != null ? JsonConvert.SerializeObject(response, SerializerOptions) : "error_null";
+                byte[] resp = Encoding.UTF8.GetBytes(json);
+
+                logger.LogInformation("On request {id} response is {resp}", replyProps.CorrelationId, json);
+
+                await channel!.BasicPublishAsync(ea.BasicProperties.ReplyToAddress.ExchangeName, ea.BasicProperties.ReplyToAddress.RoutingKey, false, replyProps, resp);
+                await AckMessage(ea);
             }
-            await Task.Run(() =>
+            catch (Exception ex)
             {
-                try
-                {
-                    IBasicProperties replyProps = channel.CreateBasicProperties();
-                    replyProps.CorrelationId = ea.BasicProperties.CorrelationId;
-
-                    byte[] resp = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(response, SerializerOptions));
-
-                    logger.LogInformation("On request {id} response is {resp}", replyProps.CorrelationId, Encoding.UTF8.GetString(resp));
-
-                    channel.BasicPublish(exchange: "", routingKey: ea.BasicProperties.ReplyTo, basicProperties: replyProps, body: resp);
-                    AckMessage(ea);
-                }
-                catch (Exception ex)
-                {
-                    logger.LogError(ex, "Error on responsing!");
-                }
-            });
+                logger.LogError(ex, "Error on responsing!");
+            }
         }
 
         public async Task StopAsync(CancellationToken cancellationToken)
         {
-            await Task.Run(() =>
+            if (connection is null)
             {
-                try
-                {
-                    connection.Close();
-                }
-                catch (Exception ex)
-                {
-                    logger.LogError(ex, "Error on stoping service!");
-                }
-            }, cancellationToken);
+                return;
+            }
+            try
+            {
+                await connection.CloseAsync(cancellationToken: cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error on stoping service!");
+            }
         }
 
-        public ValueTask DisposeAsync()
+        public async ValueTask DisposeAsync()
         {
             try
             {
-                connection.Close();
-                connection.Dispose();
-                channel.Dispose();
+                if (connection is not null)
+                {
+                    await connection.CloseAsync();
+                    connection.Dispose();
+                }
+                channel?.Dispose();
             }
             catch { }
             GC.SuppressFinalize(this);
-            return ValueTask.CompletedTask;
         }
 
         public void Dispose()
         {
             try
             {
-                connection.Close();
-                connection.Dispose();
-                channel.Dispose();
+                if (connection is not null)
+                {
+                    connection.CloseAsync().Wait();
+                    connection.Dispose();
+                }
+                channel?.Dispose();
             }
             catch { }
             GC.SuppressFinalize(this);

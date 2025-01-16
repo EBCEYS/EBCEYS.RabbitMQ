@@ -5,6 +5,7 @@ using System.Text.Json;
 
 namespace EBCEYS.RabbitMQ.Server.MappedService.Controllers
 {
+    [Obsolete("It's better to use RabbitMQSmartControllerBase")]
     public interface IRabbitMQControllerBase
     {
         IEnumerable<MethodInfo>? RabbitMQMethods { get; }
