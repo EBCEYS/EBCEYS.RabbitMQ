@@ -22,7 +22,7 @@ jobs:
         dotnet-version: 8.0.x
 
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore RabbitMQ.Server.MapedService/EBCEYS.RabbitMQ.Server.MappedService.csproj
     - name: Build
       run: dotnet build RabbitMQ.Server.MapedService/EBCEYS.RabbitMQ.Server.MappedService.csproj -c Release --no-restore
     - name: Test
