@@ -72,6 +72,7 @@ namespace EBCEYS.RabbitMQ.Client
 
             if (requestsTimeout is not null)
             {
+                await channel.BasicQosAsync(configuration.QoSConfiguration, cancellationToken);
                 consumer = new(channel);
 
                 replyQueueName = (await channel.QueueDeclareAsync(configuration.CallBackConfiguration?.QueueConfiguration, cancellationToken)).QueueName;

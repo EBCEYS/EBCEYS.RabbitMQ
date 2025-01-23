@@ -30,7 +30,8 @@ namespace EBCEYS.RabbitMQ.ExampleDockerServer
                     Port = 5672
                 },
                 ExchangeConfiguration = new ExchangeConfiguration("TestEx", ExchangeTypes.Fanout, durable: false),
-                QueueConfiguration = new QueueConfiguration("TestQueue1", autoDelete: true)
+                QueueConfiguration = new QueueConfiguration("TestQueue", autoDelete: true),
+                QoSConfiguration = new(0, 1, false)
             };
         }
     }

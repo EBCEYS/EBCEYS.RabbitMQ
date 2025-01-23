@@ -6,45 +6,6 @@
 
 Библиотека для работы с брокером сообщений RabbitMQ.
 
-### EBCEYS.RabbitMQ.Server.MappedService.RabbitMQServer
-
-Реализация consumer-a как IHostedService.
-
-Стоит отметить что в данном случае consumer всегда будет асинхронный.
-
-### EBCEYS.RabbitMQ.Server.MappedService.RabbitMQMappedServer
-
-Попытка реализации сервиса consumer-a через контроллеры (а-ля ControllerBase для http).
-
-Методы контроллера должны быть асинхронными.
-
-#### Пример конфигурации:
-```cs
-configBuilder = new();
-configBuilder.AddConnectionFactory(new()
-{
-    HostName = "Kuznetsovy-Server",
-    UserName = "ebcey1",
-    Password = "123"
-});
-configBuilder.AddQueueConfiguration(new("ExampleQueue", autoDelete: true));
-RabbitMQConfiguration config = configBuilder.Build();
-IHost host = Host.CreateDefaultBuilder(args)
-    .UseNLog()
-    .ConfigureLogging(log =>
-    {
-        log.AddNLog("nlog.config");
-    })
-    .ConfigureServices(services =>
-    {
-        services.AddRabbitMQController<ExampleController>();
-
-        services.AddRabbitMQMappedServer(config);
-    })
-    .Build();
-host.Run();
-```
-
 ### EBCEYS.RabbitMQ.Client
 Реализация publisher-a для работы с брокером сообщений RabbitMQ.
 
@@ -56,7 +17,7 @@ host.Run();
 
 ### EBCEYS.RabbitMQ.Server.MappedService.SmartController
 
-Аналогичен ```RabbitMQControllerBase```, только внутри себя содержит "сервер", принимающий сообщения из брокера.
+Аналогичен `RabbitMQControllerBase`, только внутри себя содержит "сервер", принимающий сообщения из брокера.
 
 Пример использования:
 ```cs
@@ -99,24 +60,65 @@ internal class TestController : RabbitMQSmartControllerBase
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
     [RabbitMQMethod("ExampleMethod")]
-    public async Task<string> TestMethod2(string a, string b)
+    public Task<string> TestMethod2(string a, string b)
     {
         logger.LogInformation("TestMethod2 get command with args: a: {a}\tb: {b}", a, b);
-        return await Task.FromResult(a + b);
+        return Task.FromResult(a + b);
     }
 }
 ```
 
+### EBCEYS.RabbitMQ.Server.MappedService.RabbitMQServer
+
+Реализация consumer-a как IHostedService.
+
+Стоит отметить что в данном случае consumer всегда будет асинхронный.
+
+### EBCEYS.RabbitMQ.Server.MappedService.RabbitMQMappedServer ***!!! УСТАРЕЛО !!!***
+
+Попытка реализации сервиса consumer-a через контроллеры (а-ля ControllerBase для http).
+
+Методы контроллера должны быть асинхронными.
+
+#### Пример конфигурации:
+```cs
+configBuilder = new();
+configBuilder.AddConnectionFactory(new()
+{
+    HostName = "Kuznetsovy-Server",
+    UserName = "ebcey1",
+    Password = "123"
+});
+configBuilder.AddQueueConfiguration(new("ExampleQueue", autoDelete: true));
+RabbitMQConfiguration config = configBuilder.Build();
+IHost host = Host.CreateDefaultBuilder(args)
+    .UseNLog()
+    .ConfigureLogging(log =>
+    {
+        log.AddNLog("nlog.config");
+    })
+    .ConfigureServices(services =>
+    {
+        services.AddRabbitMQController<ExampleController>();
+
+        services.AddRabbitMQMappedServer(config);
+    })
+    .Build();
+host.Run();
+```
+
 ## Изменения
+### v1.4.1
+1. Добавлена конфигурация QoS [опционально] при старте клиента и сервера.
 ### v1.4.0
 Фичи:
 1. Библиотека переведена на 8-ой дотнет.
 2. Обновлены используемые пакеты.
-3. Инициализация подключения, создание канала и консумера вынесены в старт сервиса ```IHostedService.StartAsync(CancellationToken cancellationToken)```.
+3. Инициализация подключения, создание канала и консумера вынесены в старт сервиса `IHostedService.StartAsync(CancellationToken cancellationToken)`.
 4. Добавлены поддерживаемые типы обменников как enum-ы (опционально, можно передавать по старому как строку).
 5. В конфигурацию добавлены параметры установки канала.
 6. В репозиторий добавлены примеры использования в докере. Через сервис ExampleDockerClient можно отправить сообщения и запросы на сервис ExampleDockerServer.
-7. При создании ```RabbitMQSmartController``` теперь берется не первый конструктор, а первый подходящий по сервисам в ```IServiceProvider```. Если ни один конструктор не подошел, то пытаемся создать безе парамметров.
+7. При создании `RabbitMQSmartController` теперь берется не первый конструктор, а первый подходящий по сервисам в `IServiceProvider`. Если ни один конструктор не подошел, то пытаемся создать безе парамметров.
 8. Добавлена поддержка topic обменников.
 9. Консумеры AutoAck.
 10. Добавлена конфигурация для callback обменника и очереди.
@@ -127,7 +129,7 @@ internal class TestController : RabbitMQSmartControllerBase
 1. Методы SendMessage и SendRequest у RabbitMQClient-a сделаны вирутальными чтобы их можно было замокать.
 2. Инициализация подключения к RabbitMQ теперь будет происходить на стадии запуска сервиса.
 ### v1.3.0
-1. Добавлен новый тип контроллера ```RabbitMQSmartController```.
+1. Добавлен новый тип контроллера `RabbitMQSmartController`.
 Данный контроллер содержит в себе сервер, принимающий сообщения из брокера сообщений и вызывающий методы, указанные внутри сообщения.
 ### v1.2.0
 1. Так как использование Microsoft.Text.Json вызывало ошибки в работе контроллера - было принято решение перейти на Newtownsoft.Json.

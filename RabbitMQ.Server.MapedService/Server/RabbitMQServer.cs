@@ -64,7 +64,7 @@ namespace EBCEYS.RabbitMQ.Server.Service
                 await channel.QueueBindAsync(configuration.QueueConfiguration!.QueueName!, configuration.ExchangeConfiguration?.ExchangeName ?? string.Empty, configuration.QueueConfiguration!.RoutingKey!, cancellationToken: cancellationToken);
             }
 
-            await channel.BasicQosAsync(0, 1, false, cancellationToken);
+            await channel.BasicQosAsync(configuration.QoSConfiguration, cancellationToken);
 
             Consumer.ReceivedAsync += consumerAction;
             await channel.BasicConsumeAsync(configuration.QueueConfiguration.QueueName, autoAck, Consumer, cancellationToken: cancellationToken);
@@ -96,7 +96,7 @@ namespace EBCEYS.RabbitMQ.Server.Service
         /// <exception cref="ArgumentNullException"></exception>
         /// <exception cref="Exception"></exception>
         /// <exception cref="InvalidOperationException"></exception>
-        public async Task SendResponseAsync<T>(BasicDeliverEventArgs ea, T response)
+        public async Task SendResponseAsync<T>(BasicDeliverEventArgs ea, T response)//TODO: add send error response
         {
             ArgumentNullException.ThrowIfNull(ea);
 
