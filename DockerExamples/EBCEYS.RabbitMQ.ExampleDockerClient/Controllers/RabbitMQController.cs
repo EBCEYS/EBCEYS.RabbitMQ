@@ -1,4 +1,5 @@
 using EBCEYS.RabbitMQ.Client;
+using EBCEYS.RabbitMQ.Server.MappedService.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 
@@ -141,6 +142,69 @@ namespace EBCEYS.RabbitMQ.ExampleDockerClient.Controllers
             {
                 logger.LogError(ex, "Error on sending multiple requests!");
                 return StatusCode(500, ex);
+            }
+        }
+        [HttpPost("requests/exception")]
+        public async Task<IActionResult> SendTestRequestWithException([Required][FromQuery] string message)
+        {
+            try
+            {
+                object? response = await client.SendRequestAsync<object?>(new()
+                {
+                    Method = "TestMethodException",
+                    Params = [message]
+                });
+                return Ok(response);
+            }
+            catch (RabbitMQRequestProcessingException ex)
+            {
+                return Ok(ex.ToString());
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.ToString());
+            }
+        }
+        [HttpPost("requests/with/innerexception")]
+        public async Task<IActionResult> SendTestRequestWithInnerException([Required][FromQuery] string message)
+        {
+            try
+            {
+                object? response = await client.SendRequestAsync<object?>(new()
+                {
+                    Method = "TestMethodWithInnerException",
+                    Params = [message]
+                });
+                return Ok(response);
+            }
+            catch (RabbitMQRequestProcessingException ex)
+            {
+                return Ok(ex.ToString());
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.ToString());
+            }
+        }
+        [HttpPost("requests/with/unexpectedexception")]
+        public async Task<IActionResult> SendTestRequestWithUnexpectedException([Required][FromQuery] string message)
+        {
+            try
+            {
+                object? response = await client.SendRequestAsync<object?>(new()
+                {
+                    Method = "TestMethodWithUnexpectedException",
+                    Params = [message]
+                });
+                return Ok(response);
+            }
+            catch (RabbitMQRequestProcessingException ex)
+            {
+                return Ok(ex.ToString());
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.ToString());
             }
         }
     }

@@ -28,5 +28,9 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Extensions
                 configuration?.NoWait ?? false,
                 token);
         }
+        public static Task BasicQosAsync(this IChannel channel, QoSConfiguration? qoSConfiguration, CancellationToken token = default) 
+        {
+            return channel.BasicQosAsync(qoSConfiguration?.PrefetchSize ?? 0, qoSConfiguration?.PrefetchCount ?? 1, qoSConfiguration?.Global ?? false, token);
+        }
     }
 }

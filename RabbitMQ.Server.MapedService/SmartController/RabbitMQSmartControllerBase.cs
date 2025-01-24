@@ -79,26 +79,43 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.SmartController
                     await ProcessRequestAsync(method);
                     return;
                 }
+
                 object? result = await ProcessRequestWithResponseAsync(method);
                 if (result is not null)
                 {
                     await server!.SendResponseAsync(args, result);
                     return;
                 }
+
+            }
+            catch (TargetInvocationException processingException)
+            {
+                try
+                {
+                    if (processingException.InnerException is RabbitMQRequestProcessingException rabbitEx)
+                    {
+                        await server!.SendExceptionResponseAsync(args, rabbitEx);
+                    }
+                    else
+                    {
+                        await server!.SendExceptionResponseAsync(args, new("Unexpected exception", processingException));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger!.LogError(ex, "Error on sending error response!: {@msg}", args);
+                }
             }
             catch (Exception ex)
             {
                 logger!.LogError(ex, "Error on processing message!: {@msg}", args);
-                if (args.BasicProperties.ReplyToAddress is not null)
+                try
                 {
-                    try
-                    {
-                        await server!.SendResponseAsync<object?>(args, null);
-                    }
-                    catch (Exception responseEx)
-                    {
-                        logger!.LogError(responseEx, "Error on sending error response!: {@msg}", args);
-                    }
+                    await server!.SendExceptionResponseAsync(args, new("Unexpected exception", ex));
+                }
+                catch (Exception responseEx)
+                {
+                    logger!.LogError(responseEx, "Error on sending error response!: {@msg}", args);
                 }
             }
             await server!.AckMessage(args);

@@ -1,4 +1,5 @@
 ﻿using EBCEYS.RabbitMQ.Server.MappedService.Attributes;
+using EBCEYS.RabbitMQ.Server.MappedService.Exceptions;
 using EBCEYS.RabbitMQ.Server.MappedService.SmartController;
 
 namespace EBCEYS.RabbitMQ.ExampleDockerServer.RabbitMQControllers
@@ -17,6 +18,31 @@ namespace EBCEYS.RabbitMQ.ExampleDockerServer.RabbitMQControllers
             long result = a + b;
             logger.LogInformation("Get request from rabbitmq! a + b = {result}", result);
             return Task.FromResult(result);
+        }
+        [RabbitMQMethod("TestMethodException")]
+        public Task<object> TestMethodException(string message)
+        {
+            logger.LogInformation("Get request {request}", Request?.RequestData.Method);
+            throw new RabbitMQRequestProcessingException(message, string.Empty);
+        }
+        [RabbitMQMethod("TestMethodWithInnerException")]
+        public Task<object> TestMethodWithInnerException(string message)
+        {
+            logger.LogInformation("Get request {request}", Request?.RequestData.Method);
+            try
+            {
+                throw new InvalidOperationException("Some exception");
+            }
+            catch (Exception ex) 
+            {
+                throw new RabbitMQRequestProcessingException(message, ex);
+            }
+        }
+        [RabbitMQMethod("TestMethodWithUnexpectedException")]
+        public Task<object> TestMethodWithUnexpectedException(string message)
+        {
+            logger.LogInformation("Get request {request}", Request?.RequestData.Method);
+            throw new Exception(message);
         }
     }
 }

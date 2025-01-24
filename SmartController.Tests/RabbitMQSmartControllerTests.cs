@@ -1,6 +1,7 @@
 using EBCEYS.RabbitMQ.Client;
 using EBCEYS.RabbitMQ.Configuration;
 using EBCEYS.RabbitMQ.Server.MappedService.Attributes;
+using EBCEYS.RabbitMQ.Server.MappedService.Exceptions;
 using EBCEYS.RabbitMQ.Server.MappedService.SmartController;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -79,13 +80,33 @@ namespace SmartController.Tests
         {
             (RabbitMQClient? testClient, TestSmartController? testController) = await CreateTestingObjects();
             object[] @params = [1, 2, 3];
-            long? result = await testClient!.SendRequestAsync<long>(new()
+            Assert.ThrowsException<AggregateException>(() => testClient!.SendRequestAsync<long>(new()
             {
                 Method = "TestMethodSumRequest",
                 Params = @params
-            });
-            Assert.IsNotNull(result);
-            Assert.AreNotEqual(@params.Sum(Convert.ToInt64), result);
+            }).Wait());
+        }
+        [TestMethod]
+        public async Task SendRequestWithException()
+        {
+            (RabbitMQClient? testClient, TestSmartController? testController) = await CreateTestingObjects();
+            object[] @params = ["test"];
+            Assert.ThrowsException<AggregateException>(() => testClient!.SendRequestAsync<long>(new()
+            {
+                Method = "TestMethodWithException",
+                Params = @params
+            }).Wait());
+        }
+        [TestMethod]
+        public async Task SendRequestWithInnerException()
+        {
+            (RabbitMQClient? testClient, TestSmartController? testController) = await CreateTestingObjects();
+            object[] @params = ["testInner", "test"];
+            Assert.ThrowsException<AggregateException>(() => testClient!.SendRequestAsync<long>(new()
+            {
+                Method = "TestMethodWithInnerException",
+                Params = @params
+            }).Wait());
         }
     }
     
@@ -139,6 +160,27 @@ namespace SmartController.Tests
 #pragma warning restore CA1822 // Пометьте члены как статические
         {
             return Task.FromResult(dto);
+        }
+        [RabbitMQMethod("TestMethodWithException")]
+#pragma warning disable CA1822 // Пометьте члены как статические
+        public Task<object> TestRequestException1(string name)
+#pragma warning restore CA1822 // Пометьте члены как статические
+        {
+            throw new RabbitMQRequestProcessingException(name, new Exception());
+        }
+        [RabbitMQMethod("TestMethodWithInnerException")]
+#pragma warning disable CA1822 // Пометьте члены как статические
+        public Task<object> TestRequestException2(string name1, string name2)
+#pragma warning restore CA1822 // Пометьте члены как статические
+        {
+            try
+            {
+                throw new InvalidOperationException(name1);
+            }
+            catch (Exception ex)
+            {
+                throw new RabbitMQRequestProcessingException(name2, ex);
+            }
         }
     }
 }

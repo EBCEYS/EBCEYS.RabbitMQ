@@ -1,5 +1,6 @@
 ﻿using RabbitMQ.Client;
 using System.ComponentModel.DataAnnotations;
+using System.Text;
 
 namespace EBCEYS.RabbitMQ.Configuration
 {
@@ -11,7 +12,9 @@ namespace EBCEYS.RabbitMQ.Configuration
         public QueueConfiguration QueueConfiguration { get; set; } = null!;
         public ExchangeConfiguration? ExchangeConfiguration { get; set; }
         public CreateChannelOptions? CreateChannelOptions { get; set; }
+        public QoSConfiguration QoSConfiguration { get; set; } = new(0, 1, false);
         public CallbackRabbitMQConfiguration? CallBackConfiguration { get; set; }
+        public Encoding Encoding { get; set; } = Encoding.UTF8;
         /// <summary>
         /// Initiates a new instance of the <see cref="RabbitMQConfiguration"/>.
         /// </summary>
@@ -21,24 +24,19 @@ namespace EBCEYS.RabbitMQ.Configuration
         /// <param name="callBackConfig">The callback exchange and queue configurations. [optional for <see cref="Client.RabbitMQClient"/> only]</param>
         /// <param name="createChannelOptions">The create channel options. [optinal]</param>
         /// <exception cref="ArgumentNullException"></exception>
-        public RabbitMQConfiguration(ConnectionFactory factory, QueueConfiguration queueConfiguration, ExchangeConfiguration? exchangeConfiguration = null, CallbackRabbitMQConfiguration? callBackConfig = null, CreateChannelOptions? createChannelOptions = null)
+        public RabbitMQConfiguration(ConnectionFactory factory, QueueConfiguration queueConfiguration, ExchangeConfiguration? exchangeConfiguration = null, CallbackRabbitMQConfiguration? callBackConfig = null, CreateChannelOptions? createChannelOptions = null, QoSConfiguration? qoSConfiguration = null, Encoding? encoding = null)
         {
             Factory = factory ?? throw new ArgumentNullException(nameof(factory));
             QueueConfiguration = queueConfiguration ?? throw new ArgumentNullException(nameof(queueConfiguration));
             ExchangeConfiguration = exchangeConfiguration;
             CreateChannelOptions = createChannelOptions;
+            QoSConfiguration = qoSConfiguration ?? new(0, 1, false);
             CallBackConfiguration = callBackConfig;
+            Encoding = encoding ?? Encoding.UTF8;
         }
         public RabbitMQConfiguration()
         {
             
         }
-    }
-
-    public class CallbackRabbitMQConfiguration(QueueConfiguration queueConfig, ExchangeConfiguration? exchangeConfig = null)
-    {
-        public ExchangeConfiguration? ExchangeConfiguration { get; set; } = exchangeConfig;
-        [Required]
-        public QueueConfiguration QueueConfiguration { get; set; } = queueConfig;
     }
 }
