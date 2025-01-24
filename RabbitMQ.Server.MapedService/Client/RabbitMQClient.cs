@@ -1,25 +1,30 @@
-﻿using EBCEYS.RabbitMQ.Configuration;
+﻿using System.Collections.Concurrent;
+using System.Text;
+using EBCEYS.RabbitMQ.Configuration;
 using EBCEYS.RabbitMQ.Server.MappedService.Data;
 using EBCEYS.RabbitMQ.Server.MappedService.Exceptions;
 using EBCEYS.RabbitMQ.Server.MappedService.Extensions;
+using EBCEYS.RabbitMQ.Server.Service;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using System.Collections.Concurrent;
-using System.Text;
 
 namespace EBCEYS.RabbitMQ.Client
 {
     public class RabbitMQClient : IHostedService, IDisposable, IAsyncDisposable
     {
+        private const string contentType = "application-json";
+
         private readonly bool autoAck = true;
 
         private readonly ILogger logger;
         private readonly RabbitMQConfiguration configuration;
         private readonly TimeSpan? requestsTimeout;
         private readonly JsonSerializerSettings? serializerOptions;
+        private readonly Encoding encoding;
+
         private readonly ConnectionFactory factory;
         private IConnection? connection;
         private IChannel? channel;
@@ -38,6 +43,7 @@ namespace EBCEYS.RabbitMQ.Client
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             this.requestsTimeout = requestsTimeout;
             this.serializerOptions = serializerOptions;
+            encoding = this.configuration.Encoding;
             factory = configuration.Factory ?? throw new ArgumentException(nameof(configuration.Factory));
         }
 
@@ -49,6 +55,7 @@ namespace EBCEYS.RabbitMQ.Client
             this.configuration = configurationFunction!.Invoke() ?? throw new ArgumentNullException(nameof(configurationFunction));
             this.requestsTimeout = requestsTimeout;
             this.serializerOptions = serializerOptions;
+            encoding = this.configuration.Encoding;
             factory = configuration.Factory ?? throw new ArgumentException(nameof(configuration.Factory));
         }
 
@@ -58,8 +65,8 @@ namespace EBCEYS.RabbitMQ.Client
             channel = await connection.CreateChannelAsync(configuration.CreateChannelOptions, cancellationToken);
             nonRPCProps = new BasicProperties()
             {
-                ContentEncoding = "UTF-8",
-                ContentType = "application/json"
+                ContentEncoding = encoding.EncodingName,
+                ContentType = contentType
             };
 
             await channel.QueueDeclareAsync(configuration.QueueConfiguration!, cancellationToken);
@@ -94,15 +101,28 @@ namespace EBCEYS.RabbitMQ.Client
 
         private async Task ReceiveAsync(object model, BasicDeliverEventArgs ea)
         {
-            string body = Encoding.UTF8.GetString(ea.Body.ToArray());
+            string body = encoding.GetString(ea.Body.ToArray());
             logger.LogInformation("Get rabbit response: {encodedMessage} {id}", body, ea.BasicProperties.CorrelationId);
             if (body is not null)
             {
+                RabbitMQRequestProcessingExceptionDTO? exObject = null;
+                try
+                {
+                    string? exception = ea.BasicProperties.Headers?.GetHeaderString(RabbitMQServer.ExceptionResponseHeaderKey, Encoding.UTF8);
+                    if (exception != null)
+                    {
+                        exObject = JsonConvert.DeserializeObject<RabbitMQRequestProcessingExceptionDTO?>(exception);
+                    }
+                }
+                catch (Exception deserializeException)
+                {
+                    logger.LogError(deserializeException, "Error on deserializing exception!");
+                }
                 if (ResponseDictionary.TryGetValue(ea.BasicProperties.CorrelationId ?? "", out RabbitMQClientResponse? value) && value is not null)
                 {
                     value.Response = body;
+                    value.RequestProcessingException = RabbitMQRequestProcessingException.CreateFromDTO(exObject);
                     value.Event!.Set();
-                    logger.LogDebug("Set event!");
                 }
             }
             if (!autoAck)
@@ -140,7 +160,7 @@ namespace EBCEYS.RabbitMQ.Client
                 throw new RabbitMQClientException("Connection is not opened!");
             }
             string json = JsonConvert.SerializeObject(data, serializerOptions);
-            byte[] msg = Encoding.UTF8.GetBytes(json);
+            byte[] msg = encoding.GetBytes(json);
 
             logger.LogDebug("Try to send message {msg}", json);
 
@@ -158,6 +178,7 @@ namespace EBCEYS.RabbitMQ.Client
         /// <param name="mandatory">The mandatory.</param>
         /// <returns>Response data or default if timeout.</returns>
         /// <exception cref="RabbitMQClientException"></exception>
+        /// <exception cref="RabbitMQRequestProcessingException"></exception>
         public virtual async Task<T?> SendRequestAsync<T>(RabbitMQRequestData data, bool mandatory = false, CancellationToken token = default)
         {
             if (!connection!.IsOpen || !channel!.IsOpen)
@@ -169,7 +190,7 @@ namespace EBCEYS.RabbitMQ.Client
                 throw new RabbitMQClientException("Can not send request! Timeout is not exists!");
             }
             string json = JsonConvert.SerializeObject(data, serializerOptions);
-            byte[] msg = Encoding.UTF8.GetBytes(json);
+            byte[] msg = encoding.GetBytes(json);
             logger.LogDebug("Try to send request {msg}", json);
 
             BasicProperties props = GetRPCProps();
@@ -188,12 +209,12 @@ namespace EBCEYS.RabbitMQ.Client
             @event.WaitOne(requestsTimeout.Value);
             if (ResponseDictionary.TryRemove(props.CorrelationId!, out RabbitMQClientResponse? response) && response != null && response.Response != null)
             {
+                if (response.RequestProcessingException != null)
+                {
+                    throw response.RequestProcessingException;
+                }
                 try
                 {
-                    if (response.Response == "error_null")
-                    {
-                        return default;
-                    }
                     return JsonConvert.DeserializeObject<T?>(response.Response, serializerOptions);
                 }
                 catch (Exception ex)
@@ -214,7 +235,7 @@ namespace EBCEYS.RabbitMQ.Client
                 ContentEncoding = nonRPCProps?.ContentEncoding,
                 CorrelationId = StringExtensions.ConcatStrings(Guid.NewGuid().ToString(), "_", configuration.CallBackConfiguration?.QueueConfiguration.RoutingKey ?? string.Empty),
                 ReplyToAddress = new(
-                    configuration.CallBackConfiguration?.ExchangeConfiguration?.ExchangeType ?? ExchangeTypeExtensions.ParseFromEnum(ExchangeTypes.Direct), 
+                    configuration.CallBackConfiguration?.ExchangeConfiguration?.ExchangeType ?? ExchangeTypeExtensions.ParseFromEnum(ExchangeTypes.Direct),
                     configuration.CallBackConfiguration?.ExchangeConfiguration?.ExchangeName ?? string.Empty,
                     configuration.CallBackConfiguration?.QueueConfiguration.RoutingKey ?? replyQueueName!)
             };
@@ -228,9 +249,9 @@ namespace EBCEYS.RabbitMQ.Client
                 connection?.Dispose();
                 channel?.Dispose();
             }
-            catch (Exception) 
+            catch (Exception)
             {
-                
+
             }
             GC.SuppressFinalize(this);
         }

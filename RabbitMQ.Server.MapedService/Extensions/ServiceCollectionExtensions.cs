@@ -12,12 +12,10 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Extensions
 {
     public static class ServiceCollectionExtensions
     {
+        [Obsolete("It's better to use RabbitMQSmartController")]
         public static IServiceCollection AddRabbitMQMappedServer(this IServiceCollection services, RabbitMQConfiguration config, JsonSerializerSettings? serializerOptions = null)
         {
-            if (config is null)
-            {
-                throw new ArgumentNullException(nameof(config));
-            }
+            ArgumentNullException.ThrowIfNull(config);
 
             services.AddSingleton<RabbitMQMappedServer>(sr =>
             {
@@ -30,15 +28,9 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Extensions
         }
         public static IServiceCollection AddRabbitMQServer(this IServiceCollection services, RabbitMQConfiguration config, AsyncEventHandler<BasicDeliverEventArgs> receiverAction, JsonSerializerSettings? serializerOptions = null)
         {
-            if (config is null)
-            {
-                throw new ArgumentNullException(nameof(config));
-            }
+            ArgumentNullException.ThrowIfNull(config);
 
-            if (receiverAction is null)
-            {
-                throw new ArgumentNullException(nameof(receiverAction));
-            }
+            ArgumentNullException.ThrowIfNull(receiverAction);
 
             services.AddSingleton<RabbitMQServer>(sr =>
             {
@@ -52,10 +44,7 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Extensions
 
         public static IServiceCollection AddRabbitMQClient(this IServiceCollection services, RabbitMQConfiguration config, TimeSpan? requestTimeout = null, JsonSerializerSettings? serializerOptions = null)
         {
-            if (config is null)
-            {
-                throw new ArgumentNullException(nameof(config));
-            }
+            ArgumentNullException.ThrowIfNull(config);
 
             services.AddSingleton<RabbitMQClient>(sr =>
             {
@@ -67,12 +56,10 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Extensions
             });
         }
 
+        [Obsolete("It's better to use RabbitMQSmartController")]
         public static IServiceCollection AddRabbitMQControllers(this IServiceCollection services, IEnumerable<RabbitMQControllerBase> controllers)
         {
-            if (controllers is null)
-            {
-                throw new ArgumentNullException(nameof(controllers));
-            }
+            ArgumentNullException.ThrowIfNull(controllers);
             controllers.ToList().ForEach(l =>
             {
                 services.AddScoped<RabbitMQControllerBase>(sp =>
@@ -82,6 +69,8 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Extensions
             });
             return services;
         }
+
+        [Obsolete("It's better to use RabbitMQSmartController")]
         public static IServiceCollection AddRabbitMQController<T>(this IServiceCollection services) where T: RabbitMQControllerBase
         {
             return services.AddScoped<RabbitMQControllerBase, T>();

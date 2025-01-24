@@ -1,4 +1,5 @@
-﻿using RabbitMQ.Client;
+﻿using System.Text;
+using RabbitMQ.Client;
 
 namespace EBCEYS.RabbitMQ.Configuration
 {
@@ -10,6 +11,7 @@ namespace EBCEYS.RabbitMQ.Configuration
         private CallbackRabbitMQConfiguration? callbackConfig;
         private CreateChannelOptions? createChannelOptions;
         private QoSConfiguration? qoSConfiguration;
+        private Encoding? encoding;
         public RabbitMQConfigurationBuilder AddConnectionFactory(ConnectionFactory factory)
         {
             ArgumentNullException.ThrowIfNull(factory);
@@ -49,6 +51,13 @@ namespace EBCEYS.RabbitMQ.Configuration
             this.qoSConfiguration = qoSConfiguration;
             return this;
         }
+
+        public RabbitMQConfigurationBuilder AddEncoding(Encoding encoding)
+        {
+            ArgumentNullException.ThrowIfNull(encoding);
+            this.encoding = encoding;
+            return this;
+        }
         public RabbitMQConfiguration Build()
         {
             if (factory is null)
@@ -59,7 +68,14 @@ namespace EBCEYS.RabbitMQ.Configuration
             {
                 throw new ArgumentNullException(nameof(queueConfiguration));
             }
-            return new(factory, queueConfiguration, exchangeConfiguration ?? null, callbackConfig ?? null, createChannelOptions ?? null, qoSConfiguration ?? null);
+            return new(
+                factory, 
+                queueConfiguration, 
+                exchangeConfiguration ?? null, 
+                callbackConfig ?? null, 
+                createChannelOptions ?? null, 
+                qoSConfiguration ?? null,
+                encoding ?? null);
         }
 
     }

@@ -10,6 +10,7 @@ using System.Reflection;
 
 namespace EBCEYS.RabbitMQ.Server.MappedService
 {
+    [Obsolete("It's better to use RabbitMQSmartController")]
     public class RabbitMQMappedServer : IHostedService, IAsyncDisposable, IDisposable
     {
         public RabbitMQServer Server { get; }

@@ -1,4 +1,5 @@
 ﻿using EBCEYS.RabbitMQ.Configuration;
+using EBCEYS.RabbitMQ.Server.MappedService.Exceptions;
 using EBCEYS.RabbitMQ.Server.MappedService.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -11,7 +12,10 @@ namespace EBCEYS.RabbitMQ.Server.Service
 {
     public class RabbitMQServer : IHostedService, IAsyncDisposable, IDisposable
     {
+        public static readonly string ExceptionResponseHeaderKey = "RabbitMQRequestProcessingException";
+
         private readonly bool autoAck = true;
+        private const string contentType = "application-json";
 
         private IConnection? connection;
         private IChannel? channel;
@@ -21,9 +25,10 @@ namespace EBCEYS.RabbitMQ.Server.Service
         private AsyncEventHandler<BasicDeliverEventArgs>? consumerAction;
 
         public JsonSerializerSettings? SerializerOptions { get; private set; }
+        private readonly Encoding encoding;
 
-        public RabbitMQServer(ILogger<RabbitMQServer> logger, 
-            RabbitMQConfiguration configuration, 
+        public RabbitMQServer(ILogger<RabbitMQServer> logger,
+            RabbitMQConfiguration configuration,
             AsyncEventHandler<BasicDeliverEventArgs>? consumerAction = null,
             JsonSerializerSettings? serializerOptions = null)
         {
@@ -31,6 +36,8 @@ namespace EBCEYS.RabbitMQ.Server.Service
             this.consumerAction = consumerAction;
             this.SerializerOptions = serializerOptions;
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
+            this.encoding = this.configuration.Encoding;
 
             this.logger.LogDebug("Create rabbitMQ server service!");
         }
@@ -96,7 +103,7 @@ namespace EBCEYS.RabbitMQ.Server.Service
         /// <exception cref="ArgumentNullException"></exception>
         /// <exception cref="Exception"></exception>
         /// <exception cref="InvalidOperationException"></exception>
-        public async Task SendResponseAsync<T>(BasicDeliverEventArgs ea, T response)//TODO: add send error response
+        public async Task SendResponseAsync<T>(BasicDeliverEventArgs ea, T response)
         {
             ArgumentNullException.ThrowIfNull(ea);
 
@@ -108,12 +115,12 @@ namespace EBCEYS.RabbitMQ.Server.Service
             {
                 BasicProperties replyProps = new()
                 {
-                    ContentType = "application/json",
-                    ContentEncoding = "UTF-8",
+                    ContentType = contentType,
+                    ContentEncoding = encoding.EncodingName,
                     CorrelationId = ea.BasicProperties.CorrelationId,
                 };
-                string json = response != null ? JsonConvert.SerializeObject(response, SerializerOptions) : "error_null";
-                byte[] resp = Encoding.UTF8.GetBytes(json);
+                string json = JsonConvert.SerializeObject(response, SerializerOptions);
+                byte[] resp = encoding.GetBytes(json);
 
                 logger.LogInformation("On request {id} response is {resp}", replyProps.CorrelationId, json);
 
@@ -123,6 +130,43 @@ namespace EBCEYS.RabbitMQ.Server.Service
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error on responsing!");
+            }
+        }
+
+        public async Task SendExceptionResponseAsync(BasicDeliverEventArgs ea, RabbitMQRequestProcessingException processingException)
+        {
+            ArgumentNullException.ThrowIfNull(ea);
+
+            ArgumentNullException.ThrowIfNull(processingException);
+
+            if (ea.BasicProperties.ReplyToAddress is null)
+            {
+                throw new InvalidOperationException("Event args do not contains ReplyTo params!");
+            }
+            try
+            {
+                RabbitMQRequestProcessingExceptionDTO obj = processingException.GetDTO();
+                string jsonException = JsonConvert.SerializeObject(obj, SerializerOptions);
+                BasicProperties replyProps = new()
+                {
+                    ContentType = contentType,
+                    ContentEncoding = encoding.EncodingName,
+                    CorrelationId = ea.BasicProperties.CorrelationId,
+                    Headers = new Dictionary<string, object?>()
+                    {
+                        { ExceptionResponseHeaderKey, encoding.GetBytes(jsonException) }
+                    }
+                };
+                byte[] body = encoding.GetBytes("{}");
+                logger.LogInformation("On request {id} exception response is {ex}", replyProps.CorrelationId, jsonException);
+
+
+                await channel!.BasicPublishAsync(ea.BasicProperties.ReplyToAddress.ExchangeName, ea.BasicProperties.ReplyToAddress.RoutingKey, false, replyProps, body);
+                await AckMessage(ea);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error on responsing with error!");
             }
         }
 
