@@ -1,6 +1,7 @@
 ﻿using EBCEYS.RabbitMQ.Server.MappedService.Attributes;
 using EBCEYS.RabbitMQ.Server.MappedService.Exceptions;
 using EBCEYS.RabbitMQ.Server.MappedService.SmartController;
+using Newtonsoft.Json.Linq;
 
 namespace EBCEYS.RabbitMQ.ExampleDockerServer.RabbitMQControllers
 {
@@ -19,11 +20,18 @@ namespace EBCEYS.RabbitMQ.ExampleDockerServer.RabbitMQControllers
             logger.LogInformation("Get request from rabbitmq! a + b = {result}", result);
             return Task.FromResult(result);
         }
+        [RabbitMQMethod("TestMethodRequestJToken")]
+        public Task<JToken> TestMethodRequestJToken(JToken token)
+        {
+            logger.LogInformation("Get request {request}", Request?.RequestData.Method);
+            token["TestValue"] = 2;
+            return Task.FromResult(token);
+        }
         [RabbitMQMethod("TestMethodException")]
         public Task<object> TestMethodException(string message)
         {
             logger.LogInformation("Get request {request}", Request?.RequestData.Method);
-            throw new RabbitMQRequestProcessingException(message, string.Empty);
+            throw new RabbitMQRequestProcessingException(message);
         }
         [RabbitMQMethod("TestMethodWithInnerException")]
         public Task<object> TestMethodWithInnerException(string message)

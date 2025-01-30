@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using RabbitMQ.Client.Exceptions;
 
 namespace EBCEYS.RabbitMQ.Client
 {
@@ -61,7 +62,7 @@ namespace EBCEYS.RabbitMQ.Client
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
-            connection = await factory.CreateConnectionAsync(cancellationToken);
+            connection = await configuration.Factory.CreateConnectionAsync(configuration.OnStartConfigs, null, cancellationToken);
             channel = await connection.CreateChannelAsync(configuration.CreateChannelOptions, cancellationToken);
             nonRPCProps = new BasicProperties()
             {
@@ -102,28 +103,25 @@ namespace EBCEYS.RabbitMQ.Client
         private async Task ReceiveAsync(object model, BasicDeliverEventArgs ea)
         {
             string body = encoding.GetString(ea.Body.ToArray());
-            logger.LogInformation("Get rabbit response: {encodedMessage} {id}", body, ea.BasicProperties.CorrelationId);
-            if (body is not null)
+            logger.LogTrace("Get rabbit response: {encodedMessage} {id}", body, ea.BasicProperties.CorrelationId);
+            RabbitMQRequestProcessingExceptionDTO? exObject = null;
+            try
             {
-                RabbitMQRequestProcessingExceptionDTO? exObject = null;
-                try
+                string? exception = ea.BasicProperties.Headers?.GetHeaderString(RabbitMQServer.ExceptionResponseHeaderKey, Encoding.UTF8);
+                if (exception != null)
                 {
-                    string? exception = ea.BasicProperties.Headers?.GetHeaderString(RabbitMQServer.ExceptionResponseHeaderKey, Encoding.UTF8);
-                    if (exception != null)
-                    {
-                        exObject = JsonConvert.DeserializeObject<RabbitMQRequestProcessingExceptionDTO?>(exception);
-                    }
+                    exObject = JsonConvert.DeserializeObject<RabbitMQRequestProcessingExceptionDTO?>(exception);
                 }
-                catch (Exception deserializeException)
-                {
-                    logger.LogError(deserializeException, "Error on deserializing exception!");
-                }
-                if (ResponseDictionary.TryGetValue(ea.BasicProperties.CorrelationId ?? "", out RabbitMQClientResponse? value) && value is not null)
-                {
-                    value.Response = body;
-                    value.RequestProcessingException = RabbitMQRequestProcessingException.CreateFromDTO(exObject);
-                    value.Event!.Set();
-                }
+            }
+            catch (Exception deserializeException)
+            {
+                logger.LogError(deserializeException, "Error on deserializing exception!");
+            }
+            if (ResponseDictionary.TryGetValue(ea.BasicProperties.CorrelationId ?? "", out RabbitMQClientResponse? value) && value is not null)
+            {
+                value.Response = body;
+                value.RequestProcessingException = RabbitMQRequestProcessingException.CreateFromDTO(exObject);
+                value.Event!.Set();
             }
             if (!autoAck)
             {
@@ -152,19 +150,20 @@ namespace EBCEYS.RabbitMQ.Client
         /// </summary>
         /// <param name="data">The data to send.</param>
         /// <param name="mandatory">The mandatory.</param>
+        /// <exception cref="RabbitMQClientException"></exception>
         /// <returns>Task.</returns>
         public virtual async Task SendMessageAsync(RabbitMQRequestData data, bool mandatory = false, CancellationToken token = default)
         {
             if (!connection!.IsOpen || !channel!.IsOpen)
             {
-                throw new RabbitMQClientException("Connection is not opened!");
+                throw new Server.MappedService.Exceptions.RabbitMQClientException("Connection is not opened!");
             }
             string json = JsonConvert.SerializeObject(data, serializerOptions);
             byte[] msg = encoding.GetBytes(json);
 
             logger.LogDebug("Try to send message {msg}", json);
 
-            string exchange = configuration.ExchangeConfiguration?.ExchangeName ?? "";
+            string exchange = configuration.ExchangeConfiguration?.ExchangeName ?? string.Empty;
             string routingKey = configuration.QueueConfiguration!.RoutingKey;
 
             await channel.BasicPublishAsync(exchange, routingKey, mandatory, nonRPCProps!, msg, token);
@@ -183,11 +182,11 @@ namespace EBCEYS.RabbitMQ.Client
         {
             if (!connection!.IsOpen || !channel!.IsOpen)
             {
-                throw new RabbitMQClientException("Connection is not opened!");
+                throw new Server.MappedService.Exceptions.RabbitMQClientException("Connection is not opened!");
             }
             if (requestsTimeout is null)
             {
-                throw new RabbitMQClientException("Can not send request! Timeout is not exists!");
+                throw new Server.MappedService.Exceptions.RabbitMQClientException("Can not send request! Timeout is not exists!");
             }
             string json = JsonConvert.SerializeObject(data, serializerOptions);
             byte[] msg = encoding.GetBytes(json);
@@ -201,7 +200,7 @@ namespace EBCEYS.RabbitMQ.Client
                 Event = @event
             });
 
-            string exchange = configuration.ExchangeConfiguration?.ExchangeName ?? "";
+            string exchange = configuration.ExchangeConfiguration?.ExchangeName ?? string.Empty;
             string routingKey = configuration.QueueConfiguration!.RoutingKey;
 
             await channel.BasicPublishAsync(exchange, routingKey, mandatory, props, msg, token);
@@ -211,7 +210,11 @@ namespace EBCEYS.RabbitMQ.Client
             {
                 if (response.RequestProcessingException != null)
                 {
-                    throw response.RequestProcessingException;
+                    if (configuration.OnStartConfigs.ThrowServerExceptionsOnReceivingResponse)
+                    {
+                        throw response.RequestProcessingException;
+                    }
+                    return default;
                 }
                 try
                 {

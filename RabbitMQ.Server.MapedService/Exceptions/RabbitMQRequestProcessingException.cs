@@ -1,4 +1,4 @@
-﻿using System.Text;
+﻿using EBCEYS.RabbitMQ.Server.MappedService.Extensions;
 
 namespace EBCEYS.RabbitMQ.Server.MappedService.Exceptions
 {
@@ -14,21 +14,22 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Exceptions
 
         public RabbitMQRequestProcessingException(string message, Exception? innerException = null) : base(message, innerException)
         {
-            InnerProcessingException = innerException?.ToString();
+            InnerProcessingException = base.ToString();
         }
 
-        public RabbitMQRequestProcessingException(string message, string? innerException = null) : base(message)
+        internal RabbitMQRequestProcessingException(string message, string? innerException = null) : base(message)
         {
-            InnerProcessingException = innerException;
+            InnerProcessingException = StringExtensions.ConcatStrings(message, Environment.NewLine, innerException ?? string.Empty);
         }
 
         public override string ToString()
         {
-            StringBuilder sb = new();
-            sb.AppendLine(GetType().Name);
-            sb.AppendLine(Message);
-            sb.AppendLine(InnerProcessingException);
-            return sb.ToString();
+            return StringExtensions.ConcatStrings(
+                GetType().Name, 
+                Environment.NewLine, 
+                Message, 
+                Environment.NewLine, 
+                InnerProcessingException ?? string.Empty);
         }
         /// <summary>
         /// Creates the <see cref="RabbitMQRequestProcessingExceptionDTO"/> from <see cref="RabbitMQRequestProcessingException"/>.

@@ -141,10 +141,7 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.SmartController
 
         private MethodInfo? FindMethod(string? methodName)
         {
-            if (string.IsNullOrWhiteSpace(methodName))
-            {
-                throw new ArgumentException($"\"{nameof(methodName)}\" не может быть пустым или содержать только пробел.", nameof(methodName));
-            }
+            ArgumentException.ThrowIfNullOrWhiteSpace(methodName, nameof(methodName));
             MethodInfo? method = RabbitMQMethods!.FirstOrDefault(m => (m.GetCustomAttribute(typeof(RabbitMQMethod)) as RabbitMQMethod)?.Name == methodName);
             return method;
         }

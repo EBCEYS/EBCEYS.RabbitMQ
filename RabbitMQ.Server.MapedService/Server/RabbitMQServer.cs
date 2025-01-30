@@ -1,4 +1,5 @@
-﻿using EBCEYS.RabbitMQ.Configuration;
+﻿using System.Text;
+using EBCEYS.RabbitMQ.Configuration;
 using EBCEYS.RabbitMQ.Server.MappedService.Exceptions;
 using EBCEYS.RabbitMQ.Server.MappedService.Extensions;
 using Microsoft.Extensions.Hosting;
@@ -6,7 +7,6 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using System.Text;
 
 namespace EBCEYS.RabbitMQ.Server.Service
 {
@@ -57,10 +57,10 @@ namespace EBCEYS.RabbitMQ.Server.Service
         {
             if (configuration.QueueConfiguration is null)
             {
-                throw new Exception($"{nameof(configuration.QueueConfiguration)} is null!");
+                throw new InvalidOperationException($"{nameof(configuration.QueueConfiguration)} is null!");
             }
 
-            connection = await configuration.Factory!.CreateConnectionAsync(cancellationToken);
+            connection = await configuration.Factory.CreateConnectionAsync(configuration.OnStartConfigs, null, cancellationToken);
             channel = await connection.CreateChannelAsync(configuration.CreateChannelOptions, cancellationToken);
             Consumer = new(channel);
 
@@ -75,10 +75,10 @@ namespace EBCEYS.RabbitMQ.Server.Service
 
             Consumer.ReceivedAsync += consumerAction;
             await channel.BasicConsumeAsync(configuration.QueueConfiguration.QueueName, autoAck, Consumer, cancellationToken: cancellationToken);
-
             logger.LogDebug("Consumer status on start: {status}", Consumer.IsRunning);
             logger.LogDebug("Start rabbitmq server!");
         }
+
         /// <summary>
         /// Acks the message. Use it in your consumer action.
         /// </summary>
@@ -90,7 +90,7 @@ namespace EBCEYS.RabbitMQ.Server.Service
             {
                 ArgumentNullException.ThrowIfNull(ea);
 
-                logger.LogDebug("Ack message: {tag}", ea.DeliveryTag);
+                logger.LogTrace("Ack message: {tag}", ea.DeliveryTag);
                 await channel!.BasicAckAsync(ea.DeliveryTag, false, token);
             }
         }
@@ -122,7 +122,7 @@ namespace EBCEYS.RabbitMQ.Server.Service
                 string json = JsonConvert.SerializeObject(response, SerializerOptions);
                 byte[] resp = encoding.GetBytes(json);
 
-                logger.LogInformation("On request {id} response is {resp}", replyProps.CorrelationId, json);
+                logger.LogTrace("On request {id} response is {resp}", replyProps.CorrelationId, json);
 
                 await channel!.BasicPublishAsync(ea.BasicProperties.ReplyToAddress.ExchangeName, ea.BasicProperties.ReplyToAddress.RoutingKey, false, replyProps, resp);
                 await AckMessage(ea);
@@ -158,7 +158,7 @@ namespace EBCEYS.RabbitMQ.Server.Service
                     }
                 };
                 byte[] body = encoding.GetBytes("{}");
-                logger.LogInformation("On request {id} exception response is {ex}", replyProps.CorrelationId, jsonException);
+                logger.LogTrace("On request {id} exception response is {ex}", replyProps.CorrelationId, jsonException);
 
 
                 await channel!.BasicPublishAsync(ea.BasicProperties.ReplyToAddress.ExchangeName, ea.BasicProperties.ReplyToAddress.RoutingKey, false, replyProps, body);

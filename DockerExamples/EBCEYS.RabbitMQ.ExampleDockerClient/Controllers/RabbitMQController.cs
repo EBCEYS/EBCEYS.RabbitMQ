@@ -1,7 +1,9 @@
 using EBCEYS.RabbitMQ.Client;
 using EBCEYS.RabbitMQ.Server.MappedService.Exceptions;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json.Linq;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json;
 
 namespace EBCEYS.RabbitMQ.ExampleDockerClient.Controllers
 {
@@ -24,7 +26,7 @@ namespace EBCEYS.RabbitMQ.ExampleDockerClient.Controllers
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error on sending rabbitmq message!");
-                return StatusCode(500, ex);
+                return StatusCode(500, ex.ToString());
             }
         }
         [HttpPost("messages/{count}")]
@@ -51,7 +53,7 @@ namespace EBCEYS.RabbitMQ.ExampleDockerClient.Controllers
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error on sending multiple messages!");
-                return StatusCode(500, ex);
+                return StatusCode(500, ex.ToString());
             }
         }
         [HttpPost("request")]
@@ -69,7 +71,7 @@ namespace EBCEYS.RabbitMQ.ExampleDockerClient.Controllers
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error on sending rabbitmq request!");
-                return StatusCode(500, ex);
+                return StatusCode(500, ex.ToString());
             }
         }
         [HttpPost("requestwithmanyparams")]
@@ -87,7 +89,7 @@ namespace EBCEYS.RabbitMQ.ExampleDockerClient.Controllers
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error on sending rabbitmq request!");
-                return StatusCode(500, ex);
+                return StatusCode(500, ex.ToString());
             }
         }
         [HttpPost("requests/{count}")]
@@ -114,7 +116,7 @@ namespace EBCEYS.RabbitMQ.ExampleDockerClient.Controllers
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error on sending multiple requests!");
-                return StatusCode(500, ex);
+                return StatusCode(500, ex.ToString());
             }
         }
         [HttpPost("requests/without/response/{count}")]
@@ -141,7 +143,27 @@ namespace EBCEYS.RabbitMQ.ExampleDockerClient.Controllers
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error on sending multiple requests!");
-                return StatusCode(500, ex);
+                return StatusCode(500, ex.ToString());
+            }
+        }
+        [HttpPost("requests/jtoken")]
+        public async Task<IActionResult> SendTestRequestWithJToken([Required][FromBody] JsonDocument someObject)
+        {
+            try
+            {
+                JToken token = JToken.Parse(someObject.RootElement.ToString());
+                token["TestValue"] = 1;
+                JToken? response = await client.SendRequestAsync<JToken>(new()
+                {
+                    Method = "TestMethodRequestJToken",
+                    Params = [token]
+                }, false, HttpContext.RequestAborted);
+                return Ok(response?.ToString() ?? "empty response");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error on sending request with jtoken");
+                return StatusCode(500, ex.ToString());
             }
         }
         [HttpPost("requests/exception")]
