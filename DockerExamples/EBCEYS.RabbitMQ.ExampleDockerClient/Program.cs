@@ -50,7 +50,13 @@ namespace EBCEYS.RabbitMQ.ExampleDockerClient
                 ExchangeConfiguration = new ExchangeConfiguration("TestEx", ExchangeTypes.Fanout, durable: false),
                 QueueConfiguration = new QueueConfiguration("TestQueue", autoDelete: true),
                 CallBackConfiguration = new(new QueueConfiguration("rabbitmqclient_callback", autoDelete: true)),
-                QoSConfiguration = new(0, 1, false)
+                QoSConfiguration = new(0, 1, false),
+                OnStartConfigs = new()
+                {
+                    ConnectionReties = 3,
+                    DelayBeforeRetries = TimeSpan.FromSeconds(3.0),
+                    ThrowServerExceptionsOnReceivingResponse = true
+                }
             };
         }
     }

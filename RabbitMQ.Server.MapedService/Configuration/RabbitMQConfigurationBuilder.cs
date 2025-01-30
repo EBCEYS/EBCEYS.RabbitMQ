@@ -12,6 +12,7 @@ namespace EBCEYS.RabbitMQ.Configuration
         private CreateChannelOptions? createChannelOptions;
         private QoSConfiguration? qoSConfiguration;
         private Encoding? encoding;
+        private RabbitMQOnStartConfigs? onStartConfigs;
         public RabbitMQConfigurationBuilder AddConnectionFactory(ConnectionFactory factory)
         {
             ArgumentNullException.ThrowIfNull(factory);
@@ -58,6 +59,14 @@ namespace EBCEYS.RabbitMQ.Configuration
             this.encoding = encoding;
             return this;
         }
+        
+        public RabbitMQConfigurationBuilder AddOnStartConfiguration(RabbitMQOnStartConfigs onStartConfigs)
+        {
+            ArgumentNullException.ThrowIfNull(onStartConfigs);
+            this.onStartConfigs = onStartConfigs;
+            return this;
+        }
+
         public RabbitMQConfiguration Build()
         {
             if (factory is null)
@@ -71,11 +80,12 @@ namespace EBCEYS.RabbitMQ.Configuration
             return new(
                 factory, 
                 queueConfiguration, 
-                exchangeConfiguration ?? null, 
-                callbackConfig ?? null, 
-                createChannelOptions ?? null, 
-                qoSConfiguration ?? null,
-                encoding ?? null);
+                exchangeConfiguration, 
+                callbackConfig, 
+                createChannelOptions, 
+                qoSConfiguration,
+                encoding,
+                onStartConfigs);
         }
 
     }
