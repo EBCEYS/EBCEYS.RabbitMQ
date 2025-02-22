@@ -15,7 +15,7 @@ namespace EBCEYS.RabbitMQ.ExampleDockerClient
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
-            builder.Services.AddRabbitMQClient(CreateDefaultRabbitMQConfig(), TimeSpan.FromSeconds(5.0));
+            builder.Services.AddRabbitMQClient(CreateDefaultRabbitMQConfig());
 
             builder.Configuration.AddJsonFile("appsettings.json", false);
 
@@ -49,7 +49,7 @@ namespace EBCEYS.RabbitMQ.ExampleDockerClient
                 },
                 ExchangeConfiguration = new ExchangeConfiguration("TestEx", ExchangeTypes.Fanout, durable: false),
                 QueueConfiguration = new QueueConfiguration("TestQueue", autoDelete: true),
-                CallBackConfiguration = new(new QueueConfiguration("rabbitmqclient_callback", autoDelete: true)),
+                CallBackConfiguration = new(new QueueConfiguration("rabbitmqclient_callback", autoDelete: true), TimeSpan.FromSeconds(10)),
                 QoSConfiguration = new(0, 1, false),
                 OnStartConfigs = new()
                 {

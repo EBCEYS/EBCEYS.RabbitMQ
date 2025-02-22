@@ -5,12 +5,18 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Exceptions
     /// <summary>
     /// The rabbit mq request processing exception. Based on <see cref="Exception"/>. <br/>
     /// Use it to send your exception as response.
-    /// <param name="message">The custom message.</param>
-    /// <param name="innerException">The inner exception [optional]</param>
     /// </summary>
     public class RabbitMQRequestProcessingException : Exception
     {
+        /// <summary>
+        /// The inner exception exception string represintation.
+        /// </summary>
         public string? InnerProcessingException { get; private set; }
+        /// <summary>
+        /// Initiates a new instance of the <see cref="RabbitMQRequestProcessingException"/>.
+        /// </summary>
+        /// <param name="message">The message.</param>
+        /// <param name="innerException">The inner exception</param>
 
         public RabbitMQRequestProcessingException(string message, Exception? innerException = null) : base(message, innerException)
         {
@@ -21,7 +27,10 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Exceptions
         {
             InnerProcessingException = StringExtensions.ConcatStrings(message, Environment.NewLine, innerException ?? string.Empty);
         }
-
+        /// <summary>
+        /// Gets <see cref="string"/> represintation of the <see cref="RabbitMQRequestProcessingException"/> instance.
+        /// </summary>
+        /// <returns></returns>
         public override string ToString()
         {
             return StringExtensions.ConcatStrings(
@@ -49,9 +58,20 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Exceptions
             return dto != null ? new(dto.Message, dto.InnerException) : null;
         }
     }
+    /// <summary>
+    /// Initiates a new instance of the <see cref="RabbitMQRequestProcessingExceptionDTO"/>.
+    /// </summary>
+    /// <param name="message">The message.</param>
+    /// <param name="innerException">The inner exception.</param>
     public class RabbitMQRequestProcessingExceptionDTO(string message, string? innerException = null)
     {
+        /// <summary>
+        /// The message.
+        /// </summary>
         public string Message { get; private set; } = message;
+        /// <summary>
+        /// The inner exception.
+        /// </summary>
         public string? InnerException { get; private set; } = innerException;
     }
 }

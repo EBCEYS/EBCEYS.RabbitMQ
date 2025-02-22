@@ -3,8 +3,16 @@ using RabbitMQ.Client;
 
 namespace EBCEYS.RabbitMQ.Server.MappedService.Extensions
 {
+    /// <summary>
+    /// A <see cref="ExchangeTypeExtensions"/> class.
+    /// </summary>
     public static class ExchangeTypeExtensions
     {
+        /// <summary>
+        /// Gets <see cref="string"/> representation of <see cref="ExchangeTypes"/> value.
+        /// </summary>
+        /// <param name="type">The supported exchange type.</param>
+        /// <returns>A <see cref="string"/> representation of <see cref="ExchangeTypes"/>.</returns>
         public static string ParseFromEnum(ExchangeTypes type)
         {
             return type switch
@@ -15,14 +23,18 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Extensions
                 _ => ExchangeType.Direct,
             };
         }
-        public static ExchangeTypes GetExchangeType(this string str)
+        /// <summary>
+        /// Gets <see cref="ExchangeTypes"/> from <see cref="string"/>.
+        /// </summary>
+        /// <param name="str">The string.</param>
+        /// <param name="ignoreCase">The ignore case.</param>
+        /// <returns>A <see cref="ExchangeTypes"/> parsed from <see cref="string"/>.</returns>
+        /// <exception cref="ArgumentException"></exception>
+        public static ExchangeTypes GetExchangeType(this string str, bool ignoreCase = true)
         {
-            if (string.IsNullOrWhiteSpace(str))
-            {
-                throw new ArgumentException($"\"{nameof(str)}\" не может быть пустым или содержать только пробел.", nameof(str));
-            }
+            ArgumentException.ThrowIfNullOrWhiteSpace(nameof(str));
 
-            return Enum.Parse<ExchangeTypes>(str, true);
+            return Enum.Parse<ExchangeTypes>(str, ignoreCase);
         }
     }
 }

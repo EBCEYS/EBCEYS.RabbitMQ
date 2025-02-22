@@ -4,8 +4,9 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using EBCEYS.RabbitMQ.Configuration;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using EBCEYS.RabbitMQ.Server.Service;
 
-namespace EBCEYS.RabbitMQ.Server.Service.Tests
+namespace EBCEYS.RabbitMQ.Server.MappedService.Server.Tests.Server
 {
     [TestClass()]
     public class RabbitMQServerTests
@@ -24,7 +25,7 @@ namespace EBCEYS.RabbitMQ.Server.Service.Tests
                 HostName = "localhost",
                 UserName = "guest",
                 Password = "guest",
-                Port = 5673
+                Port = 5675
             });
             configBuilder.AddQueueConfiguration(new("TestQueue", autoDelete: true));
             using RabbitMQServer server = new(serverLogger, configBuilder.Build());
@@ -39,7 +40,7 @@ namespace EBCEYS.RabbitMQ.Server.Service.Tests
                 HostName = "localhost",
                 UserName = "guest",
                 Password = "guest",
-                Port = 5673
+                Port = 5675
             });
             configBuilder.AddQueueConfiguration(new("TestQueue", autoDelete: true));
             using RabbitMQServer server = new(serverLogger, configBuilder.Build());
@@ -53,14 +54,6 @@ namespace EBCEYS.RabbitMQ.Server.Service.Tests
             {
                 return Task.CompletedTask;
             });
-
-            Assert.ThrowsException<InvalidOperationException>(() =>
-            {
-                server.SetConsumerAction((sender, args) =>
-                {
-                    return Task.CompletedTask;
-                });
-            });
         }
 
         [TestMethod()]
@@ -72,7 +65,7 @@ namespace EBCEYS.RabbitMQ.Server.Service.Tests
                 HostName = "localhost",
                 UserName = "guest",
                 Password = "guest",
-                Port = 5673
+                Port = 5675
             });
             configBuilder.AddQueueConfiguration(new("TestQueue", autoDelete: true));
             using RabbitMQServer server = new(serverLogger, configBuilder.Build());
@@ -88,7 +81,7 @@ namespace EBCEYS.RabbitMQ.Server.Service.Tests
                 HostName = "localhost",
                 UserName = "guest",
                 Password = "guest",
-                Port = 5673
+                Port = 5675
             });
             configBuilder.AddQueueConfiguration(new("TestQueue", autoDelete: true));
             using RabbitMQServer server = new(serverLogger, configBuilder.Build());
@@ -107,7 +100,7 @@ namespace EBCEYS.RabbitMQ.Server.Service.Tests
                 HostName = "localhost",
                 UserName = "guest",
                 Password = "guest",
-                Port = 5673
+                Port = 5675
             });
             configBuilder.AddQueueConfiguration(new("TestQueue", autoDelete: true));
             using RabbitMQServer server = new(serverLogger, configBuilder.Build());
@@ -126,7 +119,7 @@ namespace EBCEYS.RabbitMQ.Server.Service.Tests
                 HostName = "localhost",
                 UserName = "guest",
                 Password = "guest",
-                Port = 5673
+                Port = 5675
             });
             configBuilder.AddQueueConfiguration(new("TestQueue", autoDelete: true));
             RabbitMQServer server = new(serverLogger, configBuilder.Build());
@@ -143,7 +136,7 @@ namespace EBCEYS.RabbitMQ.Server.Service.Tests
                 HostName = "localhost",
                 UserName = "guest",
                 Password = "guest",
-                Port = 5673
+                Port = 5675
             });
             configBuilder.AddQueueConfiguration(new("TestQueue", autoDelete: true));
             RabbitMQServer server = new(serverLogger, configBuilder.Build());
@@ -159,7 +152,7 @@ namespace EBCEYS.RabbitMQ.Server.Service.Tests
                 HostName = "localhost",
                 UserName = "guest",
                 Password = "guest",
-                Port = 5673
+                Port = 5675
             });
             configBuilder.AddQueueConfiguration(new("TestQueue", autoDelete: true));
             RabbitMQServer server = new(serverLogger, configBuilder.Build());

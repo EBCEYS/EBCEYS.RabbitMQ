@@ -10,19 +10,34 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using RabbitMQ.Client.Events;
 using System.Reflection;
+using System.Text;
 
 namespace EBCEYS.RabbitMQ.Server.MappedService.SmartController
 {
-    public abstract class RabbitMQSmartControllerBase : IHostedService
+    /// <summary>
+    /// A <see cref="RabbitMQSmartControllerBase"/> class.
+    /// </summary>
+    public abstract class RabbitMQSmartControllerBase : IHostedService, IDisposable, IAsyncDisposable
     {
+        /// <summary>
+        /// The received request.
+        /// </summary>
         public BaseRabbitMQRequest? Request { get; private set; }
         private RabbitMQServer? server;
         private IServiceProvider? serviceProvider;
         private JsonSerializerSettings? serializerSettings;
         private ILogger<RabbitMQSmartControllerBase>? logger;
+        private Encoding encoding = Encoding.UTF8;
 
         private IEnumerable<MethodInfo>? RabbitMQMethods => GetControllerMethods(this.GetType());
-
+        /// <summary>
+        /// Initiates a new instance of the <see cref="RabbitMQSmartControllerBase"/>.
+        /// </summary>
+        /// <typeparam name="T">The <see cref="RabbitMQSmartControllerBase"/> generic.</typeparam>
+        /// <param name="config">The rabbitmq configuration.</param>
+        /// <param name="serviceProvider">The service provider.</param>
+        /// <param name="serializerSettings">The serializer settings.</param>
+        /// <returns>A new instance of the <see cref="RabbitMQSmartControllerBase"/>.</returns>
         public static T InitializeNewController<T>(RabbitMQConfiguration config, IServiceProvider serviceProvider, JsonSerializerSettings? serializerSettings = null) where T : RabbitMQSmartControllerBase
         {
             foreach (ConstructorInfo constructor in typeof(T).GetConstructors())
@@ -57,8 +72,11 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.SmartController
             this.serializerSettings = serializerSettings;
             this.logger = (ILogger<RabbitMQSmartControllerBase>?)serviceProvider?.GetService(typeof(ILogger<RabbitMQSmartControllerBase>)) ?? NullLoggerFactory.Instance.CreateLogger<RabbitMQSmartControllerBase>();
             this.server = new((ILogger<RabbitMQServer>?)serviceProvider?.GetService(typeof(ILogger<RabbitMQServer>)) ?? NullLoggerFactory.Instance.CreateLogger<RabbitMQServer>(), config, ConsumerAction, serializerSettings);
+            this.encoding = config.Encoding;
         }
-
+        /// <summary>
+        /// Initiates a new instance of the <see cref="RabbitMQSmartControllerBase"/>.
+        /// </summary>
         public RabbitMQSmartControllerBase()
         {
 
@@ -120,12 +138,12 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.SmartController
             }
             await server!.AckMessage(args);
         }
-
+        /// <inheritdoc/>
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             await server!.StartAsync(cancellationToken);
         }
-
+        /// <inheritdoc/>
         public async Task StopAsync(CancellationToken cancellationToken)
         {
             await server!.StopAsync(cancellationToken);
@@ -134,7 +152,7 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.SmartController
         private MethodInfo? GetMethodToExecute(BasicDeliverEventArgs eventArgs)
         {
             ArgumentNullException.ThrowIfNull(eventArgs);
-            Request = new(eventArgs, serializerSettings);
+            Request = new(eventArgs, serializerSettings, encoding);
 
             return FindMethod(Request.RequestData.Method);
         }
@@ -219,6 +237,21 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.SmartController
             }
 
             return [.. arguments];
+        }
+        /// <inheritdoc/>
+        public void Dispose()
+        {
+            server?.Dispose();
+            GC.SuppressFinalize(this);
+        }
+        /// <inheritdoc/>
+        public async ValueTask DisposeAsync()
+        {
+            if (server is not null)
+            {
+                await server.DisposeAsync();
+            }
+            GC.SuppressFinalize(this);
         }
     }
 }

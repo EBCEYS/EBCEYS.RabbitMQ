@@ -8,10 +8,18 @@ using Newtonsoft.Json;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
+#pragma warning disable IDE0130 // Пространство имен (namespace) не соответствует структуре папок.
 namespace EBCEYS.RabbitMQ.Server.Service
+#pragma warning restore IDE0130 // Пространство имен (namespace) не соответствует структуре папок.
 {
+    /// <summary>
+    /// A <see cref="RabbitMQServer"/> class.
+    /// </summary>
     public class RabbitMQServer : IHostedService, IAsyncDisposable, IDisposable
     {
+        /// <summary>
+        /// The exception response header key.
+        /// </summary>
         public static readonly string ExceptionResponseHeaderKey = "RabbitMQRequestProcessingException";
 
         private readonly bool autoAck = true;
@@ -20,13 +28,25 @@ namespace EBCEYS.RabbitMQ.Server.Service
         private IConnection? connection;
         private IChannel? channel;
         private readonly ILogger<RabbitMQServer> logger;
+        /// <summary>
+        /// The consumer.
+        /// </summary>
         public AsyncEventingBasicConsumer? Consumer { get; private set; }
         private readonly RabbitMQConfiguration configuration;
         private AsyncEventHandler<BasicDeliverEventArgs>? consumerAction;
-
+        /// <summary>
+        /// The serialization options.
+        /// </summary>
         public JsonSerializerSettings? SerializerOptions { get; private set; }
         private readonly Encoding encoding;
-
+        /// <summary>
+        /// Initiates a new instance of the <see cref="RabbitMQServer"/>.
+        /// </summary>
+        /// <param name="logger"></param>
+        /// <param name="configuration"></param>
+        /// <param name="consumerAction"></param>
+        /// <param name="serializerOptions"></param>
+        /// <exception cref="ArgumentNullException"></exception>
         public RabbitMQServer(ILogger<RabbitMQServer> logger,
             RabbitMQConfiguration configuration,
             AsyncEventHandler<BasicDeliverEventArgs>? consumerAction = null,
@@ -41,18 +61,18 @@ namespace EBCEYS.RabbitMQ.Server.Service
 
             this.logger.LogDebug("Create rabbitMQ server service!");
         }
-
+        /// <summary>
+        /// Sets the consumer action.
+        /// </summary>
+        /// <param name="consumerAction"></param>
+        /// <exception cref="InvalidOperationException"></exception>
         public void SetConsumerAction(AsyncEventHandler<BasicDeliverEventArgs> consumerAction)
         {
-            if (this.consumerAction is not null)
-            {
-                throw new InvalidOperationException("Consumer action is already set!");
-            }
             ArgumentNullException.ThrowIfNull(consumerAction);
             this.consumerAction = consumerAction;
             logger.LogDebug("Set consumer action!");
         }
-
+        /// <inheritdoc/>
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             if (configuration.QueueConfiguration is null)
@@ -83,6 +103,7 @@ namespace EBCEYS.RabbitMQ.Server.Service
         /// Acks the message. Use it in your consumer action.
         /// </summary>
         /// <param name="ea">The event args.</param>
+        /// <param name="token">The cancellation token.</param>
         /// <exception cref="ArgumentNullException"></exception>
         public async Task AckMessage(BasicDeliverEventArgs ea, CancellationToken token = default)
         {
@@ -99,11 +120,12 @@ namespace EBCEYS.RabbitMQ.Server.Service
         /// </summary>
         /// <param name="ea">The event arguments.</param>
         /// <param name="response">The response json data.</param>
+        /// <param name="token">The cancellation token.</param>
         /// <returns></returns>
         /// <exception cref="ArgumentNullException"></exception>
         /// <exception cref="Exception"></exception>
         /// <exception cref="InvalidOperationException"></exception>
-        public async Task SendResponseAsync<T>(BasicDeliverEventArgs ea, T response)
+        public async Task SendResponseAsync<T>(BasicDeliverEventArgs ea, T response, CancellationToken token = default)
         {
             ArgumentNullException.ThrowIfNull(ea);
 
@@ -124,16 +146,24 @@ namespace EBCEYS.RabbitMQ.Server.Service
 
                 logger.LogTrace("On request {id} response is {resp}", replyProps.CorrelationId, json);
 
-                await channel!.BasicPublishAsync(ea.BasicProperties.ReplyToAddress.ExchangeName, ea.BasicProperties.ReplyToAddress.RoutingKey, false, replyProps, resp);
-                await AckMessage(ea);
+                await channel!.BasicPublishAsync(ea.BasicProperties.ReplyToAddress.ExchangeName, ea.BasicProperties.ReplyToAddress.RoutingKey, false, replyProps, resp, token);
+                await AckMessage(ea, token);
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error on responsing!");
             }
         }
-
-        public async Task SendExceptionResponseAsync(BasicDeliverEventArgs ea, RabbitMQRequestProcessingException processingException)
+        /// <summary>
+        /// Sends an exception response.<br/>
+        /// Throws <see cref="InvalidOperationException"/> if <paramref name="ea"/> doesn't contain ReplyToAddress.
+        /// </summary>
+        /// <param name="ea">The received message args.</param>
+        /// <param name="processingException">The processing exception.</param>
+        /// <param name="token">The cancellation token.</param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        public async Task SendExceptionResponseAsync(BasicDeliverEventArgs ea, RabbitMQRequestProcessingException processingException, CancellationToken token = default)
         {
             ArgumentNullException.ThrowIfNull(ea);
 
@@ -161,15 +191,15 @@ namespace EBCEYS.RabbitMQ.Server.Service
                 logger.LogTrace("On request {id} exception response is {ex}", replyProps.CorrelationId, jsonException);
 
 
-                await channel!.BasicPublishAsync(ea.BasicProperties.ReplyToAddress.ExchangeName, ea.BasicProperties.ReplyToAddress.RoutingKey, false, replyProps, body);
-                await AckMessage(ea);
+                await channel!.BasicPublishAsync(ea.BasicProperties.ReplyToAddress.ExchangeName, ea.BasicProperties.ReplyToAddress.RoutingKey, false, replyProps, body, token);
+                await AckMessage(ea, token);
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error on responsing with error!");
             }
         }
-
+        /// <inheritdoc/>
         public async Task StopAsync(CancellationToken cancellationToken)
         {
             if (connection is null)
@@ -185,7 +215,7 @@ namespace EBCEYS.RabbitMQ.Server.Service
                 logger.LogError(ex, "Error on stoping service!");
             }
         }
-
+        /// <inheritdoc/>
         public async ValueTask DisposeAsync()
         {
             try
@@ -193,14 +223,13 @@ namespace EBCEYS.RabbitMQ.Server.Service
                 if (connection is not null)
                 {
                     await connection.CloseAsync();
-                    connection.Dispose();
+                    await connection.DisposeAsync();
                 }
-                channel?.Dispose();
             }
             catch { }
             GC.SuppressFinalize(this);
         }
-
+        /// <inheritdoc/>
         public void Dispose()
         {
             try

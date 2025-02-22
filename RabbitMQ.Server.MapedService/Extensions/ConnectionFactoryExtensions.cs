@@ -7,10 +7,11 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Extensions
     internal static class ConnectionFactoryExtensions
     {
         /// <summary>
-        /// Creates the connection to RabbitMQ instance with specific settings <see cref="RabbitMQOnStartConfigs"/>.
+        /// Creates a connection to RabbitMQ instance with specific settings <see cref="RabbitMQOnStartConfigs"/>.
         /// </summary>
         /// <param name="factory">The connection factory.</param>
         /// <param name="conf">The on start configuration.</param>
+        /// <param name="clientName">The client name.</param>
         /// <param name="token">The cancellation token.</param>
         /// <exception cref="BrokerUnreachableException"></exception>
         /// <exception cref="Exception"></exception>

@@ -10,9 +10,20 @@ using RabbitMQ.Client.Events;
 
 namespace EBCEYS.RabbitMQ.Server.MappedService.Extensions
 {
+    /// <summary>
+    /// A <see cref="ServiceCollectionExtensions"/> class.
+    /// </summary>
     public static class ServiceCollectionExtensions
     {
-        [Obsolete("It's better to use RabbitMQSmartController")]
+        private const string obsoleDesc = $"It's better to use {nameof(RabbitMQSmartControllerBase)}. Method will be removed in future versions.";
+        /// <summary>
+        /// Adds <see cref="RabbitMQMappedServer"/> to service collection as singleton and hosted service.
+        /// </summary>
+        /// <param name="services">The service collection.</param>
+        /// <param name="config">The rabbitmq configuration.</param>
+        /// <param name="serializerOptions">The serializer options.</param>
+        /// <returns></returns>
+        [Obsolete(obsoleDesc)]
         public static IServiceCollection AddRabbitMQMappedServer(this IServiceCollection services, RabbitMQConfiguration config, JsonSerializerSettings? serializerOptions = null)
         {
             ArgumentNullException.ThrowIfNull(config);
@@ -26,6 +37,14 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Extensions
                 return sr.GetService<RabbitMQMappedServer>()!;
             });
         }
+        /// <summary>
+        /// Adds <see cref="RabbitMQServer"/> to service collection as singleton and hosted service.
+        /// </summary>
+        /// <param name="services">The service collection.</param>
+        /// <param name="config">The rabbitmq configuration.</param>
+        /// <param name="receiverAction">The received action.</param>
+        /// <param name="serializerOptions">The serializer options.</param>
+        /// <returns></returns>
         public static IServiceCollection AddRabbitMQServer(this IServiceCollection services, RabbitMQConfiguration config, AsyncEventHandler<BasicDeliverEventArgs> receiverAction, JsonSerializerSettings? serializerOptions = null)
         {
             ArgumentNullException.ThrowIfNull(config);
@@ -41,22 +60,33 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Extensions
                 return sr.GetService<RabbitMQServer>()!;
             });
         }
-
-        public static IServiceCollection AddRabbitMQClient(this IServiceCollection services, RabbitMQConfiguration config, TimeSpan? requestTimeout = null, JsonSerializerSettings? serializerOptions = null)
+        /// <summary>
+        /// Adds <see cref="RabbitMQClient"/> to service collection as signleton and hosted service.
+        /// </summary>
+        /// <param name="services">The service collection.</param>
+        /// <param name="config">The rabbitmq configuration.</param>
+        /// <param name="serializerOptions">The serializer options.</param>
+        /// <returns></returns>
+        public static IServiceCollection AddRabbitMQClient(this IServiceCollection services, RabbitMQConfiguration config, JsonSerializerSettings? serializerOptions = null)
         {
             ArgumentNullException.ThrowIfNull(config);
 
             services.AddSingleton<RabbitMQClient>(sr =>
             {
-                return new RabbitMQClient(sr.GetService<ILogger<RabbitMQClient>>()!, config, requestTimeout, serializerOptions);
+                return new RabbitMQClient(sr.GetService<ILogger<RabbitMQClient>>()!, config, serializerOptions);
             });
             return services.AddHostedService<RabbitMQClient>(sr =>
             {
                 return sr.GetService<RabbitMQClient>()!;
             });
         }
-
-        [Obsolete("It's better to use RabbitMQSmartController")]
+        /// <summary>
+        /// Adds a collection of the <see cref="RabbitMQControllerBase"/> instances to service collection as scoped.
+        /// </summary>
+        /// <param name="services">The service collection.</param>
+        /// <param name="controllers">The controllers.</param>
+        /// <returns></returns>
+        [Obsolete(obsoleDesc)]
         public static IServiceCollection AddRabbitMQControllers(this IServiceCollection services, IEnumerable<RabbitMQControllerBase> controllers)
         {
             ArgumentNullException.ThrowIfNull(controllers);
@@ -69,13 +99,25 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Extensions
             });
             return services;
         }
-
-        [Obsolete("It's better to use RabbitMQSmartController")]
+        /// <summary>
+        /// Adds <see cref="RabbitMQControllerBase"/> to service collection as scoped.
+        /// </summary>
+        /// <typeparam name="T">The <see cref="RabbitMQControllerBase"/> representation type.</typeparam>
+        /// <param name="services">The service collection.</param>
+        /// <returns></returns>
+        [Obsolete(obsoleDesc)]
         public static IServiceCollection AddRabbitMQController<T>(this IServiceCollection services) where T: RabbitMQControllerBase
         {
             return services.AddScoped<RabbitMQControllerBase, T>();
         }
-
+        /// <summary>
+        /// Adds <see cref="RabbitMQSmartControllerBase"/> to service collection as hosted service.
+        /// </summary>
+        /// <typeparam name="T">The <see cref="RabbitMQSmartControllerBase"/> representation type.</typeparam>
+        /// <param name="services">The services.</param>
+        /// <param name="configuration">The configuration.</param>
+        /// <param name="serializerOptions">The serializer options.</param>
+        /// <returns></returns>
         public static IServiceCollection AddSmartRabbitMQController<T>(this IServiceCollection services, RabbitMQConfiguration configuration, JsonSerializerSettings? serializerOptions = null) where T : RabbitMQSmartControllerBase
         {
             return services.AddHostedService(sr =>

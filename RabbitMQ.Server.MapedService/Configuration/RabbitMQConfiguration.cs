@@ -4,17 +4,44 @@ using System.Text;
 
 namespace EBCEYS.RabbitMQ.Configuration
 {
+    /// <summary>
+    /// A <see cref="RabbitMQConfiguration"/> class.
+    /// </summary>
     public class RabbitMQConfiguration
     {
+        /// <summary>
+        /// The connection factory.
+        /// </summary>
         [Required]
         public ConnectionFactory Factory { get; set; } = null!;
+        /// <summary>
+        /// The queue configuration.
+        /// </summary>
         [Required]
         public QueueConfiguration QueueConfiguration { get; set; } = null!;
+        /// <summary>
+        /// The exchange configuration [optional].
+        /// </summary>
         public ExchangeConfiguration? ExchangeConfiguration { get; set; }
+        /// <summary>
+        /// The channel creation option [optional].
+        /// </summary>
         public CreateChannelOptions? CreateChannelOptions { get; set; }
+        /// <summary>
+        /// The QoS configuration.
+        /// </summary>
         public QoSConfiguration QoSConfiguration { get; set; } = new(0, 1, false);
+        /// <summary>
+        /// The callback configuration [optional].
+        /// </summary>
         public CallbackRabbitMQConfiguration? CallBackConfiguration { get; set; }
+        /// <summary>
+        /// The on start configuration.
+        /// </summary>
         public RabbitMQOnStartConfigs OnStartConfigs { get; set; } = new();
+        /// <summary>
+        /// The encoding to post and receive messages.
+        /// </summary>
         public Encoding Encoding { get; set; } = Encoding.UTF8;
         /// <summary>
         /// Initiates a new instance of the <see cref="RabbitMQConfiguration"/>.
@@ -39,6 +66,9 @@ namespace EBCEYS.RabbitMQ.Configuration
             Encoding = encoding ?? Encoding.UTF8;
             OnStartConfigs = onStartConfigs ?? new();
         }
+        /// <summary>
+        /// Initiates a new instance of the <see cref="RabbitMQConfiguration"/>.
+        /// </summary>
         public RabbitMQConfiguration()
         {
             

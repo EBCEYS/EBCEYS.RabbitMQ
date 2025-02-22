@@ -12,7 +12,7 @@ namespace EBCEYS.RabbitMQ.ExampleClient
         {
             builder.AddConsole();
         }));
-        static async Task Main(string[] args)
+        static async Task Main()
         {
             configBuilder = new();
             configBuilder.AddConnectionFactory(new()
@@ -22,12 +22,14 @@ namespace EBCEYS.RabbitMQ.ExampleClient
                 Password = "123"
             });
             configBuilder.AddQueueConfiguration(new("ExampleQueue", autoDelete: true));
+            configBuilder.AddCallbackConfiguration(new(new("responseQueue"), TimeSpan.FromSeconds(10.0)));
+
             logger.LogInformation("Start rabbitMQ client!");
             await RabbitMQClientProcess();
         }
         private static async Task RabbitMQClientProcess()
         {
-            RabbitMQClient client = new(logger, configBuilder!.Build(), TimeSpan.FromSeconds(5));
+            RabbitMQClient client = new(logger, configBuilder!.Build());
             await client.StartAsync(CancellationToken.None);
 
             while (true)
@@ -35,11 +37,11 @@ namespace EBCEYS.RabbitMQ.ExampleClient
                 RabbitMQRequestData request = new()
                 {
                     Method = "ExampleMethod",
-                    Params = new object[] { "asd1", "asd2" }
+                    Params = ["asd1", "asd2"]
                 };
                 logger.LogInformation("Request is {@request}", request);
                 string? result = await client.SendRequestAsync<string?>(request);
-                logger.LogInformation($"Result is: {result ?? "-1"}");
+                logger.LogInformation("Result is: {result}", result);
                 await Task.Delay(TimeSpan.FromSeconds(5));
             }
         }

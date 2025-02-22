@@ -1,5 +1,6 @@
 ﻿using EBCEYS.RabbitMQ.Configuration;
 using EBCEYS.RabbitMQ.Server.MappedService.Controllers;
+using EBCEYS.RabbitMQ.Server.MappedService.SmartController;
 using EBCEYS.RabbitMQ.Server.Service;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -10,14 +11,27 @@ using System.Reflection;
 
 namespace EBCEYS.RabbitMQ.Server.MappedService
 {
-    [Obsolete("It's better to use RabbitMQSmartController")]
+    /// <summary>
+    /// A <see cref="RabbitMQMappedServer"/> class.
+    /// </summary>
+    [Obsolete($"It's better to use {nameof(RabbitMQSmartControllerBase)}")]
     public class RabbitMQMappedServer : IHostedService, IAsyncDisposable, IDisposable
     {
+        /// <summary>
+        /// The rabbitmq server.
+        /// </summary>
         public RabbitMQServer Server { get; }
 
         private readonly ILogger logger;
         private readonly IServiceProvider serviceProvider;
-
+        /// <summary>
+        /// Initiates a new instance of the <see cref="RabbitMQMappedServer"/>.
+        /// </summary>
+        /// <param name="logger">The logger.</param>
+        /// <param name="config">The rabbitmq configuration.</param>
+        /// <param name="serviceProvider">The service provider.</param>
+        /// <param name="serializerOptions">The serializer options.</param>
+        /// <exception cref="ArgumentNullException"></exception>
         public RabbitMQMappedServer(ILogger<RabbitMQMappedServer> logger, RabbitMQConfiguration config, IServiceProvider serviceProvider, JsonSerializerSettings? serializerOptions = null)
         {
             ArgumentNullException.ThrowIfNull(config);
@@ -30,7 +44,7 @@ namespace EBCEYS.RabbitMQ.Server.MappedService
 
             logger.LogDebug("Create rabbitmq mapped server!");
         }
-
+        /// <inheritdoc/>
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             await Server.StartAsync(cancellationToken);
@@ -70,18 +84,18 @@ namespace EBCEYS.RabbitMQ.Server.MappedService
             }
             await Server.AckMessage(args);
         }
-
+        /// <inheritdoc/>
         public async Task StopAsync(CancellationToken cancellationToken)
         {
             await Server.StopAsync(cancellationToken);
         }
-
+        /// <inheritdoc/>
         public void Dispose()
         {
             Server.Dispose();
             GC.SuppressFinalize(this);
         }
-
+        /// <inheritdoc/>
         public async ValueTask DisposeAsync()
         {
             await Server.DisposeAsync();
