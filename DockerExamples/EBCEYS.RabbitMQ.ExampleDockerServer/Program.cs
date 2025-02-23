@@ -10,6 +10,7 @@ namespace EBCEYS.RabbitMQ.ExampleDockerServer
         {
             HostApplicationBuilder builder = Host.CreateApplicationBuilder(args);
             builder.Services.AddSmartRabbitMQController<TestRabbitMQController>(CreateDefaultRabbitMQConfig());
+            builder.Services.AddSmartRabbitMQController<TestGZipRabbitMQController>(CreateGZipRabbitMQConfig(), new(true));
 
             builder.Logging.ClearProviders();
             builder.Logging.AddConsole();
@@ -31,6 +32,28 @@ namespace EBCEYS.RabbitMQ.ExampleDockerServer
                 },
                 ExchangeConfiguration = new ExchangeConfiguration("TestEx", ExchangeTypes.Fanout, durable: false),
                 QueueConfiguration = new QueueConfiguration("TestQueue", autoDelete: true),
+                QoSConfiguration = new(0, 1, false),
+                OnStartConfigs = new()
+                {
+                    ConnectionReties = 3,
+                    DelayBeforeRetries = TimeSpan.FromSeconds(3.0),
+                    ThrowServerExceptionsOnReceivingResponse = true
+                }
+            };
+        }
+        private static RabbitMQConfiguration CreateGZipRabbitMQConfig()
+        {
+            return new()
+            {
+                Factory = new()
+                {
+                    HostName = "rabbitmq",
+                    UserName = "guest",
+                    Password = "guest",
+                    Port = 5672
+                },
+                ExchangeConfiguration = new ExchangeConfiguration("TestExGZip", ExchangeTypes.Fanout, durable: false),
+                QueueConfiguration = new QueueConfiguration("TestQueueGZip", autoDelete: true),
                 QoSConfiguration = new(0, 1, false),
                 OnStartConfigs = new()
                 {

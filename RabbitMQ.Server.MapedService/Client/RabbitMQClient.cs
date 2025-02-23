@@ -20,7 +20,7 @@ namespace EBCEYS.RabbitMQ.Client
     /// <summary>
     /// The <see cref="RabbitMQClient"/> class.
     /// </summary>
-    public class RabbitMQClient : IHostedService, IDisposable, IAsyncDisposable
+    public class RabbitMQClient : IRabbitMQClient
     {
         private const string contentType = "application-json";
 

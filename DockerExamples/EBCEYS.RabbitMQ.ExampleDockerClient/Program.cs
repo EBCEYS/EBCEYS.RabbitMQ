@@ -1,5 +1,7 @@
+using EBCEYS.RabbitMQ.Client;
 using EBCEYS.RabbitMQ.Configuration;
 using EBCEYS.RabbitMQ.Server.MappedService.Extensions;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace EBCEYS.RabbitMQ.ExampleDockerClient
 {
@@ -16,6 +18,7 @@ namespace EBCEYS.RabbitMQ.ExampleDockerClient
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
             builder.Services.AddRabbitMQClient(CreateDefaultRabbitMQConfig());
+            builder.Services.AddRabbitMQClient(new GZipedRabbitMQClient(NullLoggerFactory.Instance.CreateLogger<RabbitMQClient>(), CreateGZipRabbitMQConfig()));
 
             builder.Configuration.AddJsonFile("appsettings.json", false);
 
@@ -59,5 +62,31 @@ namespace EBCEYS.RabbitMQ.ExampleDockerClient
                 }
             };
         }
+        private static RabbitMQConfiguration CreateGZipRabbitMQConfig()
+        {
+            return new()
+            {
+                Factory = new()
+                {
+                    HostName = "rabbitmq",
+                    UserName = "guest",
+                    Password = "guest",
+                    Port = 5672
+                },
+                ExchangeConfiguration = new ExchangeConfiguration("TestExGZip", ExchangeTypes.Fanout, durable: false),
+                QueueConfiguration = new QueueConfiguration("TestQueueGZip", autoDelete: true),
+                QoSConfiguration = new(0, 1, false),
+                CallBackConfiguration = new(new QueueConfiguration("rabbitmqclient_callback_gziped", autoDelete: true), TimeSpan.FromSeconds(10)),
+                OnStartConfigs = new()
+                {
+                    ConnectionReties = 3,
+                    DelayBeforeRetries = TimeSpan.FromSeconds(3.0),
+                    ThrowServerExceptionsOnReceivingResponse = true
+                }
+            };
+        }
+    }
+    public class GZipedRabbitMQClient(ILogger<RabbitMQClient> logger, RabbitMQConfiguration config) : RabbitMQClient(logger, config)
+    {
     }
 }

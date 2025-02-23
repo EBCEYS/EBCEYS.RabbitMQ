@@ -82,6 +82,23 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Extensions
             });
         }
         /// <summary>
+        /// Adds a custom implementation of <see cref="RabbitMQClient"/>.
+        /// </summary>
+        /// <typeparam name="T">The <see cref="RabbitMQClient"/> implementation type.</typeparam>
+        /// <param name="services">The services.</param>
+        /// <param name="client">The client.</param>
+        /// <returns></returns>
+        public static IServiceCollection AddRabbitMQClient<T>(this IServiceCollection services, T client) where T : RabbitMQClient
+        {
+            ArgumentNullException.ThrowIfNull(client);
+
+            services.AddSingleton<T>(client);
+            return services.AddHostedService<T>(sr =>
+            {
+                return sr.GetService<T>()!;
+            });
+        }
+        /// <summary>
         /// Adds a collection of the <see cref="RabbitMQControllerBase"/> instances to service collection as scoped.
         /// </summary>
         /// <param name="services">The service collection.</param>

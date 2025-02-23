@@ -17,15 +17,16 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Data
         /// Initiates a new instance of the <see cref="BaseRabbitMQRequest"/>.
         /// </summary>
         /// <param name="eventArgs">The event args.</param>
+        /// <param name="gZipSettings">The gzip settings.</param>
         /// <param name="serializerOptions">The serializer options.</param>
         /// <param name="encoding">The encoding.</param>
         /// <exception cref="ArgumentNullException"></exception>
         /// <exception cref="ArgumentException"></exception>
-        public BaseRabbitMQRequest(BasicDeliverEventArgs eventArgs, JsonSerializerSettings? serializerOptions = null, Encoding? encoding = default)
+        public BaseRabbitMQRequest(BasicDeliverEventArgs eventArgs, GZipSettings? gZipSettings = null, JsonSerializerSettings? serializerOptions = null, Encoding? encoding = default)
         {
             ArgumentNullException.ThrowIfNull(eventArgs);
 
-            byte[] request = eventArgs.Body.ToArray();
+            byte[] request = GZipSettings.GZipDecompress(eventArgs.Body.ToArray(), gZipSettings);
             RabbitMQRequestData? data = JsonConvert.DeserializeObject<RabbitMQRequestData?>((encoding ?? Encoding.UTF8).GetString(request), serializerOptions);
             if (data is null)
             {
