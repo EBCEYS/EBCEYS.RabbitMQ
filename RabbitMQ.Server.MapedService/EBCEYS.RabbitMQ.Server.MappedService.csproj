@@ -6,12 +6,12 @@
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 	<PackageVersion>1.4.2.0</PackageVersion>
-	<Version>1.4.2.0</Version>
+	<Version>1.4.3.0</Version>
     <Title>EBCEYS.RabbitMQ</Title>
     <Description>Библиотека для работы с брокером сообщений RabbitMQ</Description>
     <PackageProjectUrl>https://github.com/EBCEYS/EBCEYS.RabbitMQ</PackageProjectUrl>
     <RepositoryUrl>https://github.com/EBCEYS/EBCEYS.RabbitMQ</RepositoryUrl>
-    <PackageTags>rabbitmq</PackageTags>
+    <PackageTags>rabbitmq;dotnet;dotnet8;c#;rabbimqclient;rabbitmq-client,;rabbitmq-server;rabbitmqcontroller;rabbitmq-controller;rpc</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
