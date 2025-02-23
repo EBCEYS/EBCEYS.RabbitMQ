@@ -5,7 +5,7 @@ using System.Text;
 namespace EBCEYS.RabbitMQ.Server.MappedService.Data
 {
     /// <summary>
-    /// A <see cref="BaseRabbitMQRequest"/>.
+    /// A <see cref="BaseRabbitMQRequest"/> class.
     /// </summary>
     public sealed class BaseRabbitMQRequest
     {
@@ -21,17 +21,14 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Data
         /// <param name="serializerOptions">The serializer options.</param>
         /// <param name="encoding">The encoding.</param>
         /// <exception cref="ArgumentNullException"></exception>
-        /// <exception cref="ArgumentException"></exception>
         public BaseRabbitMQRequest(BasicDeliverEventArgs eventArgs, GZipSettings? gZipSettings = null, JsonSerializerSettings? serializerOptions = null, Encoding? encoding = default)
         {
             ArgumentNullException.ThrowIfNull(eventArgs);
 
             byte[] request = GZipSettings.GZipDecompress(eventArgs.Body.ToArray(), gZipSettings);
-            RabbitMQRequestData? data = JsonConvert.DeserializeObject<RabbitMQRequestData?>((encoding ?? Encoding.UTF8).GetString(request), serializerOptions);
-            if (data is null)
-            {
-                throw new ArgumentException(nameof(data));
-            }
+            string json = (encoding ?? Encoding.UTF8).GetString(request);
+            RabbitMQRequestData? data = JsonConvert.DeserializeObject<RabbitMQRequestData?>(json, serializerOptions);
+            ArgumentNullException.ThrowIfNull(data);
             RequestData = data;
         }
     }

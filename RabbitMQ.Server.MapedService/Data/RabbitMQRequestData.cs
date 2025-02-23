@@ -58,12 +58,16 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Data
             {
                 return input;
             }
-            using MemoryStream stream = new();
-            using (GZipStream gzip = new(stream, settings.Value.CompressionLevel))
+            using MemoryStream result = new();
+            byte[] lengthBytes = BitConverter.GetBytes(input.Length);
+            result.Write(lengthBytes, 0, 4);
+            using (GZipStream compressionStream = new(result,
+                settings.Value.CompressionLevel))
             {
-                gzip.Write(input, 0, input.Length);
+                compressionStream.Write(input, 0, input.Length);
+                compressionStream.Flush();
             }
-            return stream.ToArray();
+            return result.ToArray();
         }
         /// <summary>
         /// Decompress the input.
@@ -77,14 +81,15 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Data
             {
                 return input;
             }
-            using MemoryStream gzipDeCompressedMemStream = new();
-            using MemoryStream gzipCompressedMemStream = new(input);
-            using (GZipStream gzipStream = new(gzipCompressedMemStream, CompressionMode.Decompress))
-            {
-                gzipStream.CopyTo(gzipDeCompressedMemStream);
-            }
-            gzipCompressedMemStream.Close();
-            return gzipCompressedMemStream.ToArray();
+            using MemoryStream source = new(input);
+            byte[] lengthBytes = new byte[4];
+            source.Read(lengthBytes, 0, 4);
+            int length = BitConverter.ToInt32(lengthBytes, 0);
+            using GZipStream decompressionStream = new(source,
+                CompressionMode.Decompress);
+            byte[] result = new byte[length];
+            decompressionStream.Read(result, 0, length);
+            return result;
         }
     }
 }
