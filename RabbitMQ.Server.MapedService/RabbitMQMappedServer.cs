@@ -1,5 +1,7 @@
 ﻿using EBCEYS.RabbitMQ.Configuration;
 using EBCEYS.RabbitMQ.Server.MappedService.Controllers;
+using EBCEYS.RabbitMQ.Server.MappedService.Data;
+using EBCEYS.RabbitMQ.Server.MappedService.Extensions;
 using EBCEYS.RabbitMQ.Server.MappedService.SmartController;
 using EBCEYS.RabbitMQ.Server.Service;
 using Microsoft.Extensions.DependencyInjection;
@@ -73,7 +75,7 @@ namespace EBCEYS.RabbitMQ.Server.MappedService
                     object? result = await c.ProcessRequestWithResponseAsync(method);
                     if (result is not null)
                     {
-                        await Server.SendResponseAsync(args, result);
+                        await Server.SendResponseAsync(args, result, GZipSettings.Default);
                         return;
                     }
                 }

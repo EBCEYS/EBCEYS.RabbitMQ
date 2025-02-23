@@ -26,16 +26,22 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Data
     /// <summary>
     /// The gzip settings.
     /// </summary>
-    public class GZipSettings
+    /// <remarks>
+    /// Initiates a new instance of the <see cref="GZipSettings"/>/
+    /// </remarks>
+    /// <param name="gZiped">The gziped.</param>
+    /// <param name="compLevel">The compression level.</param>
+    public struct GZipSettings(bool gZiped = false, CompressionLevel compLevel = CompressionLevel.Optimal)
     {
         /// <summary>
         /// Is gziped.
         /// </summary>
-        public bool GZiped { get; set; } = false;
+        public bool GZiped { get; set; } = gZiped;
         /// <summary>
         /// The compression level.
         /// </summary>
-        public CompressionLevel CompressionLevel { get; set; } = CompressionLevel.Optimal;
+        public CompressionLevel CompressionLevel { get; set; } = compLevel;
+
         /// <summary>
         /// The default realization of <see cref="GZipSettings"/>.
         /// </summary>
@@ -48,12 +54,12 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Data
         /// <returns>Compresed message if <see cref="GZiped"/> set <c>true</c>; otherwise <paramref name="input"/>.</returns>
         public static byte[] GZipCompress(byte[] input, GZipSettings? settings)
         {
-            if (settings is null || !settings.GZiped)
+            if (settings is null || !settings.Value.GZiped)
             {
                 return input;
             }
             using MemoryStream stream = new();
-            using (GZipStream gzip = new(stream, settings.CompressionLevel))
+            using (GZipStream gzip = new(stream, settings.Value.CompressionLevel))
             {
                 gzip.Write(input, 0, input.Length);
             }
@@ -67,7 +73,7 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Data
         /// <returns>Decompresed message if <see cref="GZiped"/> set <c>true</c>; otherwise <paramref name="input"/>.</returns>
         public static byte[] GZipDecompress(byte[] input, GZipSettings? settings)
         {
-            if (settings is null || !settings.GZiped)
+            if (settings is null || !settings.Value.GZiped)
             {
                 return input;
             }
