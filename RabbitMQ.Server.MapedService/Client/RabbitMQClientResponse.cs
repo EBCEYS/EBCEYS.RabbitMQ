@@ -1,4 +1,5 @@
-﻿using EBCEYS.RabbitMQ.Server.MappedService.Exceptions;
+﻿using EBCEYS.RabbitMQ.Server.MappedService.Data;
+using EBCEYS.RabbitMQ.Server.MappedService.Exceptions;
 
 namespace EBCEYS.RabbitMQ.Client
 {

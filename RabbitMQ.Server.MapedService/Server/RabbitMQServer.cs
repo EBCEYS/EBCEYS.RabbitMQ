@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using EBCEYS.RabbitMQ.Configuration;
+using EBCEYS.RabbitMQ.Server.MappedService.Data;
 using EBCEYS.RabbitMQ.Server.MappedService.Exceptions;
 using EBCEYS.RabbitMQ.Server.MappedService.Extensions;
 using Microsoft.Extensions.Hosting;
@@ -21,6 +22,10 @@ namespace EBCEYS.RabbitMQ.Server.Service
         /// The exception response header key.
         /// </summary>
         public static readonly string ExceptionResponseHeaderKey = "RabbitMQRequestProcessingException";
+        /// <summary>
+        /// The gzip settings header key.
+        /// </summary>
+        public static readonly string GZipSettingsResponseHeaderKey = "GZipCompressionSettings";
 
         private readonly bool autoAck = true;
         private const string contentType = "application-json";
@@ -120,12 +125,13 @@ namespace EBCEYS.RabbitMQ.Server.Service
         /// </summary>
         /// <param name="ea">The event arguments.</param>
         /// <param name="response">The response json data.</param>
+        /// <param name="gzip">The gzip compression settings.</param>
         /// <param name="token">The cancellation token.</param>
         /// <returns></returns>
         /// <exception cref="ArgumentNullException"></exception>
         /// <exception cref="Exception"></exception>
         /// <exception cref="InvalidOperationException"></exception>
-        public async Task SendResponseAsync<T>(BasicDeliverEventArgs ea, T response, CancellationToken token = default)
+        public async Task SendResponseAsync<T>(BasicDeliverEventArgs ea, T response, GZipSettings? gzip, CancellationToken token = default)
         {
             ArgumentNullException.ThrowIfNull(ea);
 
@@ -135,14 +141,22 @@ namespace EBCEYS.RabbitMQ.Server.Service
             }
             try
             {
+                string json = JsonConvert.SerializeObject(response, SerializerOptions);
+                byte[] resp = encoding.GetBytes(json);
+
+                Dictionary<string, object?> headers = [];
+                if (gzip is not null && gzip.GZiped)
+                {
+                    headers.TryAdd(GZipSettingsResponseHeaderKey, encoding.GetBytes(JsonConvert.SerializeObject(gzip, SerializerOptions)));
+                    resp = GZipSettings.GZipCompress(resp, gzip);
+                }
                 BasicProperties replyProps = new()
                 {
                     ContentType = contentType,
                     ContentEncoding = encoding.EncodingName,
                     CorrelationId = ea.BasicProperties.CorrelationId,
+                    Headers = headers,
                 };
-                string json = JsonConvert.SerializeObject(response, SerializerOptions);
-                byte[] resp = encoding.GetBytes(json);
 
                 logger.LogTrace("On request {id} response is {resp}", replyProps.CorrelationId, json);
 

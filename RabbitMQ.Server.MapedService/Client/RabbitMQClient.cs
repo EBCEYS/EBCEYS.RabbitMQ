@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using System.IO.Compression;
 using System.Text;
 using EBCEYS.RabbitMQ.Configuration;
 using EBCEYS.RabbitMQ.Server.MappedService.Data;
@@ -22,7 +23,6 @@ namespace EBCEYS.RabbitMQ.Client
     public class RabbitMQClient : IHostedService, IDisposable, IAsyncDisposable
     {
         private const string contentType = "application-json";
-        private const string obsoleteTimeSpanMethodDescription = $"Constructors with requestsTimeout will be removed in future versions\r\nDefine requests timeout in {nameof(RabbitMQConfiguration.CallBackConfiguration)}.";
 
         private readonly bool autoAck = true;
 
@@ -119,21 +119,10 @@ namespace EBCEYS.RabbitMQ.Client
 
         private async Task ReceiveAsync(object model, BasicDeliverEventArgs ea)
         {
-            string body = encoding.GetString(ea.Body.ToArray());
+            RabbitMQRequestProcessingExceptionDTO? exObject = GetExceptionHeader(ea);
+            GZipSettings? gZipSettings = GetGZipHeader(ea);
+            string body = encoding.GetString(GZipSettings.GZipDecompress(ea.Body.ToArray(), gZipSettings));
             logger.LogTrace("Get rabbit response: {encodedMessage} {id}", body, ea.BasicProperties.CorrelationId);
-            RabbitMQRequestProcessingExceptionDTO? exObject = null;
-            try
-            {
-                string? exception = ea.BasicProperties.Headers?.GetHeaderString(RabbitMQServer.ExceptionResponseHeaderKey, Encoding.UTF8);
-                if (exception != null)
-                {
-                    exObject = JsonConvert.DeserializeObject<RabbitMQRequestProcessingExceptionDTO?>(exception);
-                }
-            }
-            catch (Exception deserializeException)
-            {
-                logger.LogError(deserializeException, "Error on deserializing exception!");
-            }
             if (ResponseDictionary.TryGetValue(ea.BasicProperties.CorrelationId ?? "", out RabbitMQClientResponse? value) && value is not null)
             {
                 value.Response = body;
@@ -145,6 +134,33 @@ namespace EBCEYS.RabbitMQ.Client
                 await channel!.BasicAckAsync(ea.DeliveryTag, false);
             }
         }
+
+        private RabbitMQRequestProcessingExceptionDTO? GetExceptionHeader(BasicDeliverEventArgs ea)
+        {
+            return GetObjectFromHeaders<RabbitMQRequestProcessingExceptionDTO>(ea, RabbitMQServer.ExceptionResponseHeaderKey);
+        }
+        private GZipSettings? GetGZipHeader(BasicDeliverEventArgs ea)
+        {
+            return GetObjectFromHeaders<GZipSettings>(ea, RabbitMQServer.GZipSettingsResponseHeaderKey);
+        }
+        private T? GetObjectFromHeaders<T>(BasicDeliverEventArgs ea, string headerKey) where T : class
+        {
+            T? result = null;
+            try
+            {
+                string? resultString = ea.BasicProperties.Headers?.GetHeaderString(headerKey, encoding);
+                if (resultString != null)
+                {
+                    result = JsonConvert.DeserializeObject<T?>(resultString, serializerOptions);
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error on deserializing header key {headerKey}", headerKey);
+            }
+            return result;
+        }
+
         /// <inheritdoc/>
         public async Task StopAsync(CancellationToken cancellationToken)
         {
@@ -183,8 +199,12 @@ namespace EBCEYS.RabbitMQ.Client
 
             string exchange = configuration.ExchangeConfiguration?.ExchangeName ?? string.Empty;
             string routingKey = configuration.QueueConfiguration!.RoutingKey;
+            await PostMessageAsync(mandatory, msg, exchange, routingKey, data.GZip, nonRPCProps!, token);
+        }
 
-            await channel.BasicPublishAsync(exchange, routingKey, mandatory, nonRPCProps!, msg, token);
+        private async Task PostMessageAsync(bool mandatory, byte[] msg, string exchange, string routingKey, GZipSettings? gziped, BasicProperties props, CancellationToken token = default)
+        {
+            await channel!.BasicPublishAsync(exchange, routingKey, mandatory, props, GZipSettings.GZipCompress(msg, gziped), token);
         }
 
         /// <summary>
@@ -222,7 +242,7 @@ namespace EBCEYS.RabbitMQ.Client
             string exchange = configuration.ExchangeConfiguration?.ExchangeName ?? string.Empty;
             string routingKey = configuration.QueueConfiguration!.RoutingKey;
 
-            await channel.BasicPublishAsync(exchange, routingKey, mandatory, props, msg, token);
+            await PostMessageAsync(mandatory, msg, exchange, routingKey, data.GZip, props, token);
 
             @event.WaitOne(requestsTimeout.Value);
             if (ResponseDictionary.TryRemove(props.CorrelationId!, out RabbitMQClientResponse? response) && response != null && response.Response != null)

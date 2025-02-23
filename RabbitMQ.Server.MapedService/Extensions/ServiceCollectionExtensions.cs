@@ -1,6 +1,7 @@
 ﻿using EBCEYS.RabbitMQ.Client;
 using EBCEYS.RabbitMQ.Configuration;
 using EBCEYS.RabbitMQ.Server.MappedService.Controllers;
+using EBCEYS.RabbitMQ.Server.MappedService.Data;
 using EBCEYS.RabbitMQ.Server.MappedService.SmartController;
 using EBCEYS.RabbitMQ.Server.Service;
 using Microsoft.Extensions.DependencyInjection;
@@ -116,13 +117,14 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Extensions
         /// <typeparam name="T">The <see cref="RabbitMQSmartControllerBase"/> representation type.</typeparam>
         /// <param name="services">The services.</param>
         /// <param name="configuration">The configuration.</param>
+        /// <param name="gZipSettings">The gzip settings. Compress the response message.</param>
         /// <param name="serializerOptions">The serializer options.</param>
         /// <returns></returns>
-        public static IServiceCollection AddSmartRabbitMQController<T>(this IServiceCollection services, RabbitMQConfiguration configuration, JsonSerializerSettings? serializerOptions = null) where T : RabbitMQSmartControllerBase
+        public static IServiceCollection AddSmartRabbitMQController<T>(this IServiceCollection services, RabbitMQConfiguration configuration, GZipSettings? gZipSettings = null, JsonSerializerSettings? serializerOptions = null) where T : RabbitMQSmartControllerBase
         {
             return services.AddHostedService(sr =>
             {
-                return RabbitMQSmartControllerBase.InitializeNewController<T>(configuration, sr, serializerOptions);
+                return RabbitMQSmartControllerBase.InitializeNewController<T>(configuration, sr, gZipSettings, serializerOptions);
             });
         }
 

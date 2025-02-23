@@ -28,6 +28,7 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.SmartController
         private JsonSerializerSettings? serializerSettings;
         private ILogger<RabbitMQSmartControllerBase>? logger;
         private Encoding encoding = Encoding.UTF8;
+        private GZipSettings? gzipSettings;
 
         private IEnumerable<MethodInfo>? RabbitMQMethods => GetControllerMethods(this.GetType());
         /// <summary>
@@ -36,9 +37,10 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.SmartController
         /// <typeparam name="T">The <see cref="RabbitMQSmartControllerBase"/> generic.</typeparam>
         /// <param name="config">The rabbitmq configuration.</param>
         /// <param name="serviceProvider">The service provider.</param>
+        /// <param name="gzipSettings">The gzip settings.</param>
         /// <param name="serializerSettings">The serializer settings.</param>
         /// <returns>A new instance of the <see cref="RabbitMQSmartControllerBase"/>.</returns>
-        public static T InitializeNewController<T>(RabbitMQConfiguration config, IServiceProvider serviceProvider, JsonSerializerSettings? serializerSettings = null) where T : RabbitMQSmartControllerBase
+        public static T InitializeNewController<T>(RabbitMQConfiguration config, IServiceProvider serviceProvider, GZipSettings? gzipSettings = null, JsonSerializerSettings? serializerSettings = null) where T : RabbitMQSmartControllerBase
         {
             foreach (ConstructorInfo constructor in typeof(T).GetConstructors())
             {
@@ -47,7 +49,7 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.SmartController
                     ParameterInfo[] parameters = constructor.GetParameters();
                     IEnumerable<object?> inputParameters = parameters.Select(p => serviceProvider!.GetService(p.ParameterType));
                     T controller = (T)Activator.CreateInstance(typeof(T), inputParameters.Any() ? inputParameters.ToArray() : null)!;
-                    controller.SetParams(config, serviceProvider, serializerSettings);
+                    controller.SetParams(config, serviceProvider, gzipSettings, serializerSettings);
                     return controller;
                 }
                 catch (Exception)
@@ -56,7 +58,7 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.SmartController
                 }
             }
             T emptyController = (T)Activator.CreateInstance(typeof(T))!;
-            emptyController.SetParams(config, serviceProvider, serializerSettings);
+            emptyController.SetParams(config, serviceProvider, gzipSettings, serializerSettings);
             return emptyController;
         }
 
@@ -66,13 +68,14 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.SmartController
             return methods.Where(m => (m.GetCustomAttribute(typeof(RabbitMQMethod)) as RabbitMQMethod) != null);
         }
 
-        private void SetParams(RabbitMQConfiguration config, IServiceProvider? serviceProvider, JsonSerializerSettings? serializerSettings = null)
+        private void SetParams(RabbitMQConfiguration config, IServiceProvider? serviceProvider, GZipSettings? gzipSettings = null, JsonSerializerSettings? serializerSettings = null)
         {
             this.serviceProvider = serviceProvider;
             this.serializerSettings = serializerSettings;
             this.logger = (ILogger<RabbitMQSmartControllerBase>?)serviceProvider?.GetService(typeof(ILogger<RabbitMQSmartControllerBase>)) ?? NullLoggerFactory.Instance.CreateLogger<RabbitMQSmartControllerBase>();
             this.server = new((ILogger<RabbitMQServer>?)serviceProvider?.GetService(typeof(ILogger<RabbitMQServer>)) ?? NullLoggerFactory.Instance.CreateLogger<RabbitMQServer>(), config, ConsumerAction, serializerSettings);
             this.encoding = config.Encoding;
+            this.gzipSettings = gzipSettings;
         }
         /// <summary>
         /// Initiates a new instance of the <see cref="RabbitMQSmartControllerBase"/>.
@@ -101,7 +104,7 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.SmartController
                 object? result = await ProcessRequestWithResponseAsync(method);
                 if (result is not null)
                 {
-                    await server!.SendResponseAsync(args, result);
+                    await server!.SendResponseAsync(args, result, gzipSettings);
                     return;
                 }
 
