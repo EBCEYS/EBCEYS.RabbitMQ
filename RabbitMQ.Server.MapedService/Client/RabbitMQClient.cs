@@ -120,8 +120,11 @@ namespace EBCEYS.RabbitMQ.Client
         private async Task ReceiveAsync(object model, BasicDeliverEventArgs ea)
         {
             RabbitMQRequestProcessingExceptionDTO? exObject = GetExceptionHeader(ea);
-            GZipSettings? gZipSettings = GetGZipHeader(ea);
-            string body = encoding.GetString(GZipSettings.GZipDecompress(ea.Body.ToArray(), gZipSettings));
+            bool gZipSettings = ea.BasicProperties.Headers?.GetHeaderBytes(RabbitMQServer.GZipSettingsResponseHeaderKey)?.FirstOrDefault() == 1;
+            string body = encoding.GetString(GZipSettings.GZipDecompress(ea.Body.ToArray(), new()
+            {
+                GZiped = gZipSettings
+            }));
             logger.LogTrace("Get rabbit response: {encodedMessage} {id}", body, ea.BasicProperties.CorrelationId);
             if (ResponseDictionary.TryGetValue(ea.BasicProperties.CorrelationId ?? "", out RabbitMQClientResponse? value) && value is not null)
             {
@@ -138,10 +141,6 @@ namespace EBCEYS.RabbitMQ.Client
         private RabbitMQRequestProcessingExceptionDTO? GetExceptionHeader(BasicDeliverEventArgs ea)
         {
             return GetObjectFromHeaders<RabbitMQRequestProcessingExceptionDTO>(ea, RabbitMQServer.ExceptionResponseHeaderKey);
-        }
-        private GZipSettings? GetGZipHeader(BasicDeliverEventArgs ea)
-        {
-            return GetObjectFromHeaders<GZipSettings>(ea, RabbitMQServer.GZipSettingsResponseHeaderKey);
         }
         private T? GetObjectFromHeaders<T>(BasicDeliverEventArgs ea, string headerKey) where T : class
         {

@@ -1,4 +1,5 @@
 ﻿using System.IO.Compression;
+using System.Text.Json.Serialization;
 
 namespace EBCEYS.RabbitMQ.Server.MappedService.Data
 {
@@ -18,6 +19,8 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Data
         /// <summary>
         /// Is gziped message.
         /// </summary>
+        [Newtonsoft.Json.JsonIgnore()]
+        [System.Text.Json.Serialization.JsonIgnore()]
         public GZipSettings? GZip { get; set; } = null;
     }
     /// <summary>

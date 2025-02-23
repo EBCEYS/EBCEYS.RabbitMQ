@@ -147,7 +147,7 @@ namespace EBCEYS.RabbitMQ.Server.Service
                 Dictionary<string, object?> headers = [];
                 if (gzip is not null && gzip.GZiped)
                 {
-                    headers.TryAdd(GZipSettingsResponseHeaderKey, encoding.GetBytes(JsonConvert.SerializeObject(gzip, SerializerOptions)));
+                    headers.TryAdd(GZipSettingsResponseHeaderKey, new byte[1] { 1 });
                     resp = GZipSettings.GZipCompress(resp, gzip);
                 }
                 BasicProperties replyProps = new()
