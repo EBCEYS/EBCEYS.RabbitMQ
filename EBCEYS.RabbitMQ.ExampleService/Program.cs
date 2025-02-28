@@ -6,6 +6,7 @@ using NLog.Web;
 
 namespace EBCEYS.RabbitMQ.ExampleService
 {
+    [Obsolete("Old realization")]
     public class Program
     {
         private static RabbitMQConfigurationBuilder? configBuilder;

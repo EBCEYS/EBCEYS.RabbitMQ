@@ -1,9 +1,11 @@
-﻿using EBCEYS.RabbitMQ.Configuration;
+﻿using System.Linq.Expressions;
+using EBCEYS.RabbitMQ.Client;
+using EBCEYS.RabbitMQ.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace EBCEYS.RabbitMQ.Client.Tests
+namespace EBCEYS.RabbitMQ.Server.MappedService.Client.Tests.Client
 {
     [TestClass()]
     public class RabbitMQClientTests
@@ -18,7 +20,7 @@ namespace EBCEYS.RabbitMQ.Client.Tests
                 HostName = "localhost",
                 UserName = "guest",
                 Password = "guest",
-                Port = 5673
+                Port = 5675
             });
             configBuilder.AddQueueConfiguration(new("TestQueue", autoDelete: true));
             using RabbitMQClient client = new(clientLogger, configBuilder.Build());
@@ -35,7 +37,7 @@ namespace EBCEYS.RabbitMQ.Client.Tests
                     HostName = "localhost",
                     UserName = "guest",
                     Password = "guest",
-                    Port = 5673
+                    Port = 5675
                 });
                 configBuilder.AddQueueConfiguration(new("TestQueue", autoDelete: true));
                 return configBuilder.Build();
@@ -51,7 +53,7 @@ namespace EBCEYS.RabbitMQ.Client.Tests
                 HostName = "localhost",
                 UserName = "guest",
                 Password = "guest",
-                Port = 5673
+                Port = 5675
             });
             configBuilder.AddQueueConfiguration(new("TestQueue", autoDelete: true));
             using RabbitMQClient client = new(clientLogger, configBuilder.Build());
@@ -68,7 +70,7 @@ namespace EBCEYS.RabbitMQ.Client.Tests
                 HostName = "localhost",
                 UserName = "guest",
                 Password = "guest",
-                Port = 5673
+                Port = 5675
             });
             configBuilder.AddQueueConfiguration(new("TestQueue", autoDelete: true));
             RabbitMQClient client = new(clientLogger, configBuilder.Build());
@@ -86,9 +88,9 @@ namespace EBCEYS.RabbitMQ.Client.Tests
                 HostName = "localhost",
                 UserName = "guest",
                 Password = "guest",
-                Port = 5673
+                Port = 5675
             });
-            configBuilder.AddQueueConfiguration(new("TestQueue", autoDelete:true));
+            configBuilder.AddQueueConfiguration(new("TestQueue", autoDelete: true));
             using RabbitMQClient client = new(clientLogger, configBuilder.Build());
 
             await client.StartAsync(CancellationToken.None);
@@ -108,10 +110,11 @@ namespace EBCEYS.RabbitMQ.Client.Tests
                 HostName = "localhost",
                 UserName = "guest",
                 Password = "guest",
-                Port = 5673
+                Port = 5675
             });
             configBuilder.AddQueueConfiguration(new("TestQueue", autoDelete: true));
-            using RabbitMQClient client = new(clientLogger, configBuilder.Build(), TimeSpan.FromSeconds(1));
+            configBuilder.AddCallbackConfiguration(new(new("ResponseQueue", autoDelete: true), TimeSpan.FromSeconds(10.0)));
+            using RabbitMQClient client = new(clientLogger, configBuilder.Build());
 
             await client.StartAsync(CancellationToken.None);
 
@@ -132,7 +135,7 @@ namespace EBCEYS.RabbitMQ.Client.Tests
                 HostName = "localhost",
                 UserName = "guest",
                 Password = "guest",
-                Port = 5673
+                Port = 5675
             });
             configBuilder.AddQueueConfiguration(new("TestQueue", autoDelete: true));
             RabbitMQClient client = new(clientLogger, configBuilder.Build());
@@ -148,7 +151,7 @@ namespace EBCEYS.RabbitMQ.Client.Tests
                 HostName = "localhost",
                 UserName = "guest",
                 Password = "guest",
-                Port = 5673
+                Port = 5675
             });
             configBuilder.AddQueueConfiguration(new("TestQueue", autoDelete: true));
             RabbitMQClient client = new(clientLogger, configBuilder.Build());

@@ -1,6 +1,7 @@
 ﻿using EBCEYS.RabbitMQ.Server.MappedService.Attributes;
 using EBCEYS.RabbitMQ.Server.MappedService.Data;
 using EBCEYS.RabbitMQ.Server.MappedService.Exceptions;
+using EBCEYS.RabbitMQ.Server.MappedService.SmartController;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using RabbitMQ.Client.Events;
@@ -9,15 +10,18 @@ using System.Reflection;
 namespace EBCEYS.RabbitMQ.Server.MappedService.Controllers
 {
     /// <summary>
-    /// Base controller class. <br/>
-    /// Methods should be asynchronous only!
+    /// A <see cref="RabbitMQControllerBase"/> class.
     /// </summary>
-    [Obsolete("It's better to use RabbitMQSmartControllerBase")]
+    [Obsolete($"It's better to use {nameof(RabbitMQSmartControllerBase)}")]
     public abstract class RabbitMQControllerBase : IDisposable, IRabbitMQControllerBase
     {
         private BaseRabbitMQRequest? request;
+        /// <inheritdoc/>
         public IEnumerable<MethodInfo>? RabbitMQMethods { get; private set; }
         private JsonSerializerSettings? SerializerOptions { get; set; }
+        /// <summary>
+        /// Initiates a new instance of the <see cref="RabbitMQControllerBase"/>.
+        /// </summary>
         public RabbitMQControllerBase()
         {
             SetControllerMethods();
@@ -34,12 +38,12 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Controllers
             IEnumerable<MethodInfo> methods = controllerType.GetMethods().Where(m => m.Attributes.HasFlag(MethodAttributes.Public));
             return methods.Where(m => (m.GetCustomAttribute(typeof(RabbitMQMethod)) as RabbitMQMethod) != null);
         }
-
+        /// <inheritdoc/>
         public MethodInfo? GetMethodToExecute(BasicDeliverEventArgs eventArgs, JsonSerializerSettings? serializerOptions = null)
         {
             ArgumentNullException.ThrowIfNull(eventArgs);
             SerializerOptions = serializerOptions;
-            request = new(eventArgs, SerializerOptions);
+            request = new(eventArgs, GZipSettings.Default, SerializerOptions);
 
             if (RabbitMQMethods is null)
             {
@@ -48,7 +52,7 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Controllers
 
             return FindMethod(request.RequestData.Method);
         }
-
+        /// <inheritdoc/>
         public MethodInfo? FindMethod(string? methodName)
         {
             if (string.IsNullOrWhiteSpace(methodName))
@@ -58,7 +62,7 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Controllers
             MethodInfo? method = RabbitMQMethods!.FirstOrDefault(m => (m.GetCustomAttribute(typeof(RabbitMQMethod)) as RabbitMQMethod)?.Name == methodName);
             return method;
         }
-
+        /// <inheritdoc/>
         public async Task<object?> ProcessRequestWithResponseAsync(MethodInfo method)
         {
             if (request is null)
@@ -84,7 +88,7 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Controllers
                 return ((dynamic)t).Result;
             }
         }
-
+        /// <inheritdoc/>
         public async Task ProcessRequestAsync(MethodInfo method)
         {
             if (request is null)
@@ -129,7 +133,7 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Controllers
 
             return [.. arguments];
         }
-
+        /// <inheritdoc/>
         public void Dispose()
         {
             GC.SuppressFinalize(this);

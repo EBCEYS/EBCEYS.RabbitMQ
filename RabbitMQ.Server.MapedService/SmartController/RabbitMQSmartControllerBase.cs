@@ -10,20 +10,37 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using RabbitMQ.Client.Events;
 using System.Reflection;
+using System.Text;
 
 namespace EBCEYS.RabbitMQ.Server.MappedService.SmartController
 {
-    public abstract class RabbitMQSmartControllerBase : IHostedService
+    /// <summary>
+    /// A <see cref="RabbitMQSmartControllerBase"/> class.
+    /// </summary>
+    public abstract class RabbitMQSmartControllerBase : IHostedService, IDisposable, IAsyncDisposable
     {
+        /// <summary>
+        /// The received request.
+        /// </summary>
         public BaseRabbitMQRequest? Request { get; private set; }
         private RabbitMQServer? server;
         private IServiceProvider? serviceProvider;
         private JsonSerializerSettings? serializerSettings;
         private ILogger<RabbitMQSmartControllerBase>? logger;
+        private Encoding encoding = Encoding.UTF8;
+        private GZipSettings? gzipSettings;
 
         private IEnumerable<MethodInfo>? RabbitMQMethods => GetControllerMethods(this.GetType());
-
-        public static T InitializeNewController<T>(RabbitMQConfiguration config, IServiceProvider serviceProvider, JsonSerializerSettings? serializerSettings = null) where T : RabbitMQSmartControllerBase
+        /// <summary>
+        /// Initiates a new instance of the <see cref="RabbitMQSmartControllerBase"/>.
+        /// </summary>
+        /// <typeparam name="T">The <see cref="RabbitMQSmartControllerBase"/> generic.</typeparam>
+        /// <param name="config">The rabbitmq configuration.</param>
+        /// <param name="serviceProvider">The service provider.</param>
+        /// <param name="gzipSettings">The gzip settings.</param>
+        /// <param name="serializerSettings">The serializer settings.</param>
+        /// <returns>A new instance of the <see cref="RabbitMQSmartControllerBase"/>.</returns>
+        public static T InitializeNewController<T>(RabbitMQConfiguration config, IServiceProvider serviceProvider, GZipSettings? gzipSettings = null, JsonSerializerSettings? serializerSettings = null) where T : RabbitMQSmartControllerBase
         {
             foreach (ConstructorInfo constructor in typeof(T).GetConstructors())
             {
@@ -32,7 +49,7 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.SmartController
                     ParameterInfo[] parameters = constructor.GetParameters();
                     IEnumerable<object?> inputParameters = parameters.Select(p => serviceProvider!.GetService(p.ParameterType));
                     T controller = (T)Activator.CreateInstance(typeof(T), inputParameters.Any() ? inputParameters.ToArray() : null)!;
-                    controller.SetParams(config, serviceProvider, serializerSettings);
+                    controller.SetParams(config, serviceProvider, gzipSettings, serializerSettings);
                     return controller;
                 }
                 catch (Exception)
@@ -41,7 +58,7 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.SmartController
                 }
             }
             T emptyController = (T)Activator.CreateInstance(typeof(T))!;
-            emptyController.SetParams(config, serviceProvider, serializerSettings);
+            emptyController.SetParams(config, serviceProvider, gzipSettings, serializerSettings);
             return emptyController;
         }
 
@@ -51,14 +68,18 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.SmartController
             return methods.Where(m => (m.GetCustomAttribute(typeof(RabbitMQMethod)) as RabbitMQMethod) != null);
         }
 
-        private void SetParams(RabbitMQConfiguration config, IServiceProvider? serviceProvider, JsonSerializerSettings? serializerSettings = null)
+        private void SetParams(RabbitMQConfiguration config, IServiceProvider? serviceProvider, GZipSettings? gzipSettings = null, JsonSerializerSettings? serializerSettings = null)
         {
             this.serviceProvider = serviceProvider;
             this.serializerSettings = serializerSettings;
             this.logger = (ILogger<RabbitMQSmartControllerBase>?)serviceProvider?.GetService(typeof(ILogger<RabbitMQSmartControllerBase>)) ?? NullLoggerFactory.Instance.CreateLogger<RabbitMQSmartControllerBase>();
             this.server = new((ILogger<RabbitMQServer>?)serviceProvider?.GetService(typeof(ILogger<RabbitMQServer>)) ?? NullLoggerFactory.Instance.CreateLogger<RabbitMQServer>(), config, ConsumerAction, serializerSettings);
+            this.encoding = config.Encoding;
+            this.gzipSettings = gzipSettings;
         }
-
+        /// <summary>
+        /// Initiates a new instance of the <see cref="RabbitMQSmartControllerBase"/>.
+        /// </summary>
         public RabbitMQSmartControllerBase()
         {
 
@@ -83,7 +104,7 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.SmartController
                 object? result = await ProcessRequestWithResponseAsync(method);
                 if (result is not null)
                 {
-                    await server!.SendResponseAsync(args, result);
+                    await server!.SendResponseAsync(args, result, gzipSettings);
                     return;
                 }
 
@@ -120,12 +141,12 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.SmartController
             }
             await server!.AckMessage(args);
         }
-
+        /// <inheritdoc/>
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             await server!.StartAsync(cancellationToken);
         }
-
+        /// <inheritdoc/>
         public async Task StopAsync(CancellationToken cancellationToken)
         {
             await server!.StopAsync(cancellationToken);
@@ -134,7 +155,7 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.SmartController
         private MethodInfo? GetMethodToExecute(BasicDeliverEventArgs eventArgs)
         {
             ArgumentNullException.ThrowIfNull(eventArgs);
-            Request = new(eventArgs, serializerSettings);
+            Request = new(eventArgs, gzipSettings, serializerSettings, encoding);
 
             return FindMethod(Request.RequestData.Method);
         }
@@ -219,6 +240,21 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.SmartController
             }
 
             return [.. arguments];
+        }
+        /// <inheritdoc/>
+        public void Dispose()
+        {
+            server?.Dispose();
+            GC.SuppressFinalize(this);
+        }
+        /// <inheritdoc/>
+        public async ValueTask DisposeAsync()
+        {
+            if (server is not null)
+            {
+                await server.DisposeAsync();
+            }
+            GC.SuppressFinalize(this);
         }
     }
 }

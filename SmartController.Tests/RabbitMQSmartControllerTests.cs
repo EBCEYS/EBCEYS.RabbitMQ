@@ -13,7 +13,7 @@ namespace SmartController.Tests
     [TestClass]
     public class RabbitMQSmartControllerTests
     {
-        private async Task<(RabbitMQClient, TestSmartController)> CreateTestingObjects()
+        private static async Task<(RabbitMQClient, TestSmartController)> CreateTestingObjects()
         {
             RabbitMQConfigurationBuilder configBuilder = new();
             configBuilder.AddConnectionFactory(new()
@@ -21,16 +21,16 @@ namespace SmartController.Tests
                 HostName = "localhost",
                 UserName = "guest",
                 Password = "guest",
-                Port = 5673
+                Port = 5675
             });
             configBuilder.AddQueueConfiguration(new("TestQueue", autoDelete: true));
-            configBuilder.AddCallbackConfiguration(new(new("testqueue_callback", autoDelete: true)));
+            configBuilder.AddCallbackConfiguration(new(new("testqueue_callback", autoDelete: true), TimeSpan.FromSeconds(2.0)));
             RabbitMQConfiguration config = configBuilder.Build();
 #pragma warning disable CS8625 // Литерал, равный NULL, не может быть преобразован в ссылочный тип, не допускающий значение NULL.
             TestSmartController testController = RabbitMQSmartControllerBase.InitializeNewController<TestSmartController>(config, null);
 #pragma warning restore CS8625 // Литерал, равный NULL, не может быть преобразован в ссылочный тип, не допускающий значение NULL.
             await testController.StartAsync(CancellationToken.None);
-            RabbitMQClient testClient = new(new NullLoggerFactory().CreateLogger<RabbitMQClient>(), config, TimeSpan.FromSeconds(10.0));
+            RabbitMQClient testClient = new(new NullLoggerFactory().CreateLogger<RabbitMQClient>(), config);
             await testClient.StartAsync(CancellationToken.None);
             return (testClient, testController);
         }

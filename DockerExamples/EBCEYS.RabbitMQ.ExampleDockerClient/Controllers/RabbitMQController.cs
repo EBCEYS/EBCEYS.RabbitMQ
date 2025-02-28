@@ -9,7 +9,7 @@ namespace EBCEYS.RabbitMQ.ExampleDockerClient.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class RabbitMQController(ILogger<RabbitMQController> logger, RabbitMQClient client) : ControllerBase
+    public class RabbitMQController(ILogger<RabbitMQController> logger, RabbitMQClient client, GZipedRabbitMQClient gZipedClient) : ControllerBase
     {
         [HttpPost("message")]
         public async Task<IActionResult> SendTestMessage()
@@ -223,6 +223,42 @@ namespace EBCEYS.RabbitMQ.ExampleDockerClient.Controllers
             catch (RabbitMQRequestProcessingException ex)
             {
                 return Ok(ex.ToString());
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.ToString());
+            }
+        }
+        [HttpPost("message/gziped")]
+        public async Task<IActionResult> PostGZipedMessage([FromQuery][Required] string str)
+        {
+            try
+            {
+                await gZipedClient.SendMessageAsync(new()
+                {
+                    Params = [str],
+                    Method = "TestMessageGZiped",
+                    GZip = new(true, System.IO.Compression.CompressionLevel.Optimal)
+                });
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.ToString());
+            }
+        }
+        [HttpPost("request/gziped")]
+        public async Task<IActionResult> PostGZipedRequest([FromQuery][Required] string str)
+        {
+            try
+            {
+                string? response = await gZipedClient.SendRequestAsync<string>(new()
+                {
+                    Params = [str],
+                    Method = "TestRequestGZiped",
+                    GZip = new(true, System.IO.Compression.CompressionLevel.Optimal)
+                });
+                return Ok(new { response });
             }
             catch (Exception ex)
             {

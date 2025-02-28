@@ -1,5 +1,8 @@
 ﻿namespace EBCEYS.RabbitMQ.Server.MappedService.Exceptions
 {
+    /// <summary>
+    /// A <see cref="RabbitMQClientException"/> class.
+    /// </summary>
     public class RabbitMQClientException : Exception
     {
         /// <summary>

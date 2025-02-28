@@ -1,5 +1,8 @@
 ﻿namespace EBCEYS.RabbitMQ.Configuration
 {
+    /// <summary>
+    /// A <see cref="RabbitMQOnStartConfigs"/> class.
+    /// </summary>
     public class RabbitMQOnStartConfigs
     {
         private byte connectionRetries = 1;
@@ -22,8 +25,17 @@
         /// </summary>
         public TimeSpan DelayBeforeRetries
         {
-            get { return delayBeforeRetries; }
-            set { if (value < TimeSpan.FromSeconds(0.1)) delayBeforeRetries = TimeSpan.FromSeconds(1.0); else delayBeforeRetries = value; }
+            get 
+            { 
+                return delayBeforeRetries; 
+            }
+            set 
+            { 
+                if (value < TimeSpan.FromSeconds(0.1)) 
+                    delayBeforeRetries = TimeSpan.FromSeconds(1.0); 
+                else 
+                    delayBeforeRetries = value; 
+            }
         }
         /// <summary>
         /// Set <c>true</c> if you want to client throws server exceptions as <see cref="Server.MappedService.Exceptions.RabbitMQRequestProcessingException"/> on receiving response.<br/>
