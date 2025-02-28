@@ -155,7 +155,7 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.SmartController
         private MethodInfo? GetMethodToExecute(BasicDeliverEventArgs eventArgs)
         {
             ArgumentNullException.ThrowIfNull(eventArgs);
-            Request = new(eventArgs, gzipSettings, serializerSettings, encoding);
+            Request = new(eventArgs, serializerSettings, encoding);
 
             return FindMethod(Request.RequestData.Method);
         }

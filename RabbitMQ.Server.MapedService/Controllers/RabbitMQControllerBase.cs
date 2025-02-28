@@ -43,7 +43,7 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Controllers
         {
             ArgumentNullException.ThrowIfNull(eventArgs);
             SerializerOptions = serializerOptions;
-            request = new(eventArgs, GZipSettings.Default, SerializerOptions);
+            request = new(eventArgs, SerializerOptions);
 
             if (RabbitMQMethods is null)
             {

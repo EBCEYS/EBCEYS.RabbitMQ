@@ -84,7 +84,8 @@ namespace EBCEYS.RabbitMQ.Client
             nonRPCProps = new BasicProperties()
             {
                 ContentEncoding = encoding.EncodingName,
-                ContentType = contentType
+                ContentType = contentType,
+                Headers = new Dictionary<string, object?>()
             };
 
             await channel.QueueDeclareAsync(configuration.QueueConfiguration!, cancellationToken);
@@ -203,6 +204,10 @@ namespace EBCEYS.RabbitMQ.Client
 
         private async Task PostMessageAsync(bool mandatory, byte[] msg, string exchange, string routingKey, GZipSettings? gziped, BasicProperties props, CancellationToken token = default)
         {
+            if (gziped?.GZiped ?? false)
+            {
+                props.Headers?.Add(RabbitMQServer.GZipSettingsResponseHeaderKey, new byte[1] { 1 });
+            }
             await channel!.BasicPublishAsync(exchange, routingKey, mandatory, props, GZipSettings.GZipCompress(msg, gziped), token);
         }
 
@@ -278,7 +283,8 @@ namespace EBCEYS.RabbitMQ.Client
                 ReplyToAddress = new(
                     configuration.CallBackConfiguration?.ExchangeConfiguration?.ExchangeType ?? ExchangeTypeExtensions.ParseFromEnum(ExchangeTypes.Direct),
                     configuration.CallBackConfiguration?.ExchangeConfiguration?.ExchangeName ?? string.Empty,
-                    configuration.CallBackConfiguration?.QueueConfiguration.RoutingKey ?? replyQueueName!)
+                    configuration.CallBackConfiguration?.QueueConfiguration.RoutingKey ?? replyQueueName!),
+                Headers = new Dictionary<string, object?>()
             };
         }
         /// <inheritdoc/>

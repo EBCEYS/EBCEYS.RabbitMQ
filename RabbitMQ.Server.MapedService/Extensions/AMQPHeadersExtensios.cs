@@ -12,9 +12,16 @@ namespace EBCEYS.RabbitMQ.Server.MappedService.Extensions
         /// <returns>Returns the <see cref="byte"/> array from AMQP headers by key if exists; otherwise null.</returns>
         internal static byte[]? GetHeaderBytes(this IDictionary<string, object?> headers, string key)
         {
-            if (headers.TryGetValue(key, out object? value) && value != null)
+            try
             {
-                return (byte[]?)Convert.ChangeType(value, typeof(byte[])) ?? [];
+                if (headers.TryGetValue(key, out object? value) && value != null)
+                {
+                    return (byte[]?)Convert.ChangeType(value, typeof(byte[])) ?? [];
+                }
+            }
+            catch (InvalidCastException)
+            {
+                return null;
             }
             return null;
         }
