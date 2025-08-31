@@ -3,14 +3,9 @@ using EBCEYS.RabbitMQ.Server.MappedService.SmartController;
 
 namespace EBCEYS.RabbitMQ.ExampleSmartController.Controllers;
 
-internal class TestController : RabbitMQSmartControllerBase
+internal class TestController(ILogger<TestController> logger) : RabbitMQSmartControllerBase
 {
-    private readonly ILogger<TestController> _logger;
-
-    public TestController(ILogger<TestController> logger)
-    {
-        this._logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
+    private readonly ILogger<TestController> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
     [RabbitMQMethod("TestMethod1")]
     public Task TestMethod1(string a, string b)

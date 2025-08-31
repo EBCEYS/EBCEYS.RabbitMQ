@@ -30,7 +30,7 @@ public class RabbitMQClient : IRabbitMQClient
     private readonly TimeSpan? _requestsTimeout;
 
 
-    private readonly ConcurrentDictionary<string, TaskCompletionSource<RabbitMQClientResponse>> _responseDictionary =
+    private static readonly ConcurrentDictionary<string, TaskCompletionSource<RabbitMQClientResponse>> ResponseDictionary =
         new();
 
     private readonly JsonSerializerSettings? _serializerOptions;
@@ -190,13 +190,14 @@ public class RabbitMQClient : IRabbitMQClient
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(token);
         cts.CancelAfter(_requestsTimeout.Value);
         
-        var tcs = new TaskCompletionSource<RabbitMQClientResponse>(cts.Token,
-            TaskCreationOptions.RunContinuationsAsynchronously);
-        _responseDictionary.TryAdd(props.CorrelationId!, tcs);
+        var tcs = new TaskCompletionSource<RabbitMQClientResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
+        
+        cts.Token.Register(() => tcs.TrySetCanceled());
 
         var exchange = _configuration.ExchangeConfiguration?.ExchangeName ?? string.Empty;
         var routingKey = _configuration.QueueConfiguration.RoutingKey;
 
+        ResponseDictionary.TryAdd(props.CorrelationId!, tcs);
         await PostMessageAsync(mandatory, msg, exchange, routingKey, data.GZip, props, cts.Token);
 
         try
@@ -224,12 +225,13 @@ public class RabbitMQClient : IRabbitMQClient
                 return default;
             }
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException ex)
         {
+            Console.WriteLine(ex);
         }
         finally
         {
-            _responseDictionary.TryRemove(props.CorrelationId!, out _);
+            ResponseDictionary.TryRemove(props.CorrelationId!, out _);
         }
 
         _logger.LogError("Response on request {requestId} is timeout!", props.CorrelationId!);
@@ -280,7 +282,7 @@ public class RabbitMQClient : IRabbitMQClient
             GZiped = gZipSettings
         }));
         _logger.LogTrace("Get rabbit response: {encodedMessage} {id}", body, ea.BasicProperties.CorrelationId);
-        if (_responseDictionary.TryGetValue(ea.BasicProperties.CorrelationId ?? "", out var value))
+        if (ResponseDictionary.TryGetValue(ea.BasicProperties.CorrelationId ?? "", out var value))
             value.TrySetResult(new RabbitMQClientResponse
             {
                 Response = body,

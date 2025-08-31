@@ -5,7 +5,7 @@ name: .NET
 
 on:
   push:
-    branches: [ "main" ]
+  pull_request:
 
 jobs:
   build:
@@ -25,9 +25,4 @@ jobs:
       run: dotnet build RabbitMQ.Server.MapedService/EBCEYS.RabbitMQ.Server.MappedService.csproj -c Release --no-restore
     - name: Test
       run: dotnet test -c Release
-      
-    - name: Pack
-      run: dotnet pack RabbitMQ.Server.MapedService/EBCEYS.RabbitMQ.Server.MappedService.csproj -c Release --no-restore --no-build --include-symbols -p:SymbolPackageFormat=snupkg -o .
-    - name: Push to NuGet
-      run: dotnet nuget push *.nupkg --skip-duplicate -s https://api.nuget.org/v3/index.json -k ${{secrets.NUGET_API_KEY}}
 

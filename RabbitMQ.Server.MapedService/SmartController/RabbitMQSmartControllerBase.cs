@@ -91,9 +91,10 @@ public abstract class RabbitMQSmartControllerBase : IHostedService, IDisposable,
             }
             catch (Exception)
             {
+                // ignored
             }
 
-        var emptyController = (T)Activator.CreateInstance(typeof(T))!;
+        var emptyController = Activator.CreateInstance<T>();
         emptyController.SetParams(config, serviceProvider, gzipSettings, serializerSettings);
         return emptyController;
     }

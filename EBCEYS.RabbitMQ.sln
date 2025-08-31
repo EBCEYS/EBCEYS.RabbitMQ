@@ -25,6 +25,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EBCEYS.RabbitMQ.ExampleDock
 EndProject
 Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{D6284C09-1BE8-405C-85DA-B3EDEC9FE695}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EBCEYS.RabbitMQ.IntegrationTests", "EBCEYS.RabbitMQ.IntegrationTests\EBCEYS.RabbitMQ.IntegrationTests.csproj", "{7E4FAD5D-1393-48F6-A421-98090F149F86}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EBCEYS.RabbitMQ.TestServer", "EBCEYS.RabbitMQ.TestServer\EBCEYS.RabbitMQ.TestServer.csproj", "{E755415C-FEE4-4A28-B48C-C6BD410488A5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -87,6 +91,22 @@ Global
 		{D6284C09-1BE8-405C-85DA-B3EDEC9FE695}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D6284C09-1BE8-405C-85DA-B3EDEC9FE695}.Release|Client+SmartController.ActiveCfg = Release|Any CPU
 		{D6284C09-1BE8-405C-85DA-B3EDEC9FE695}.Release|Client+SmartController.Build.0 = Release|Any CPU
+		{7E4FAD5D-1393-48F6-A421-98090F149F86}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7E4FAD5D-1393-48F6-A421-98090F149F86}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7E4FAD5D-1393-48F6-A421-98090F149F86}.Debug|Client+SmartController.ActiveCfg = Debug|Any CPU
+		{7E4FAD5D-1393-48F6-A421-98090F149F86}.Debug|Client+SmartController.Build.0 = Debug|Any CPU
+		{7E4FAD5D-1393-48F6-A421-98090F149F86}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7E4FAD5D-1393-48F6-A421-98090F149F86}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7E4FAD5D-1393-48F6-A421-98090F149F86}.Release|Client+SmartController.ActiveCfg = Release|Any CPU
+		{7E4FAD5D-1393-48F6-A421-98090F149F86}.Release|Client+SmartController.Build.0 = Release|Any CPU
+		{E755415C-FEE4-4A28-B48C-C6BD410488A5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E755415C-FEE4-4A28-B48C-C6BD410488A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E755415C-FEE4-4A28-B48C-C6BD410488A5}.Debug|Client+SmartController.ActiveCfg = Debug|Any CPU
+		{E755415C-FEE4-4A28-B48C-C6BD410488A5}.Debug|Client+SmartController.Build.0 = Debug|Any CPU
+		{E755415C-FEE4-4A28-B48C-C6BD410488A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E755415C-FEE4-4A28-B48C-C6BD410488A5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E755415C-FEE4-4A28-B48C-C6BD410488A5}.Release|Client+SmartController.ActiveCfg = Release|Any CPU
+		{E755415C-FEE4-4A28-B48C-C6BD410488A5}.Release|Client+SmartController.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -101,6 +121,8 @@ Global
 		{C81A3F20-E01E-44BC-B528-3F0B93B1A9FA} = {7A3B90CC-8259-40D3-B038-972F651F59DE}
 		{8C2C9607-C4B7-4EF3-8CCC-C965C620E73C} = {7A3B90CC-8259-40D3-B038-972F651F59DE}
 		{D6284C09-1BE8-405C-85DA-B3EDEC9FE695} = {7A3B90CC-8259-40D3-B038-972F651F59DE}
+		{7E4FAD5D-1393-48F6-A421-98090F149F86} = {B6725CED-C54A-4018-9DDD-7807DBDC8A99}
+		{E755415C-FEE4-4A28-B48C-C6BD410488A5} = {B6725CED-C54A-4018-9DDD-7807DBDC8A99}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {2FEB6566-DC36-4DFD-BE23-559A331C2931}

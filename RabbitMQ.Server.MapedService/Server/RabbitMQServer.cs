@@ -83,8 +83,9 @@ public class RabbitMQServer : IHostedService, IAsyncDisposable, IDisposable
                 await _connection.DisposeAsync();
             }
         }
-        catch
+        catch (Exception)
         {
+            // ignored
         }
 
         GC.SuppressFinalize(this);
@@ -103,8 +104,9 @@ public class RabbitMQServer : IHostedService, IAsyncDisposable, IDisposable
 
             _channel?.Dispose();
         }
-        catch
+        catch(Exception)
         {
+            // ignored
         }
 
         GC.SuppressFinalize(this);
@@ -121,13 +123,13 @@ public class RabbitMQServer : IHostedService, IAsyncDisposable, IDisposable
         _channel = await _connection.CreateChannelAsync(_configuration.CreateChannelOptions, cancellationToken);
         Consumer = new AsyncEventingBasicConsumer(_channel);
 
-        await _channel.QueueDeclareAsync(_configuration.QueueConfiguration!, cancellationToken);
+        await _channel.QueueDeclareAsync(_configuration.QueueConfiguration, cancellationToken);
         if (_configuration.ExchangeConfiguration is not null)
         {
             await _channel.ExchangeDeclareAsync(_configuration.ExchangeConfiguration, cancellationToken);
-            await _channel.QueueBindAsync(_configuration.QueueConfiguration!.QueueName!,
+            await _channel.QueueBindAsync(_configuration.QueueConfiguration.QueueName,
                 _configuration.ExchangeConfiguration?.ExchangeName ?? string.Empty,
-                _configuration.QueueConfiguration!.RoutingKey!, cancellationToken: cancellationToken);
+                _configuration.QueueConfiguration.RoutingKey, cancellationToken: cancellationToken);
         }
 
         await _channel.BasicQosAsync(_configuration.QoSConfiguration, cancellationToken);
@@ -206,9 +208,9 @@ public class RabbitMQServer : IHostedService, IAsyncDisposable, IDisposable
             var resp = _encoding.GetBytes(json);
 
             Dictionary<string, object?> headers = [];
-            if (gzip.HasValue && gzip.Value.GZiped)
+            if (gzip is { GZiped: true })
             {
-                headers.TryAdd(GZipSettingsResponseHeaderKey, new byte[1] { 1 });
+                headers.TryAdd(GZipSettingsResponseHeaderKey, new byte[] { 1 });
                 resp = GZipSettings.GZipCompress(resp, gzip);
             }
 
@@ -228,7 +230,7 @@ public class RabbitMQServer : IHostedService, IAsyncDisposable, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error on responsing!");
+            _logger.LogError(ex, "Error on responding!");
         }
     }
 
