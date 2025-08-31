@@ -1,18 +1,22 @@
-﻿namespace EBCEYS.RabbitMQ.Server.MappedService.Exceptions
+﻿namespace EBCEYS.RabbitMQ.Server.MappedService.Exceptions;
+
+/// <summary>
+///     A <see cref="RabbitMQClientException" /> class.
+/// </summary>
+public class RabbitMQClientException : Exception
 {
     /// <summary>
-    /// A <see cref="RabbitMQClientException"/> class.
+    ///     Base rabbitmq exception call.
     /// </summary>
-    public class RabbitMQClientException : Exception
+    public RabbitMQClientException()
     {
-        /// <summary>
-        /// Base rabbitmq exception call.
-        /// </summary>
-        public RabbitMQClientException() : base() { }
-        /// <summary>
-        /// Rabbitmq exception call with message.
-        /// </summary>
-        /// <param name="message">The message.</param>
-        public RabbitMQClientException(string message) : base(message) { }
+    }
+
+    /// <summary>
+    ///     Rabbitmq exception call with message.
+    /// </summary>
+    /// <param name="message">The message.</param>
+    public RabbitMQClientException(string message) : base(message)
+    {
     }
 }

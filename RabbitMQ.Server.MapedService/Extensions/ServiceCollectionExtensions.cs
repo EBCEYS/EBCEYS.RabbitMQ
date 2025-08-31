@@ -9,159 +9,159 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using RabbitMQ.Client.Events;
 
-namespace EBCEYS.RabbitMQ.Server.MappedService.Extensions
+namespace EBCEYS.RabbitMQ.Server.MappedService.Extensions;
+
+/// <summary>
+///     A <see cref="ServiceCollectionExtensions" /> class.
+/// </summary>
+public static class ServiceCollectionExtensions
 {
+    private const string ObsoleDesc =
+        $"It's better to use {nameof(RabbitMQSmartControllerBase)}. Method will be removed in future versions.";
+
     /// <summary>
-    /// A <see cref="ServiceCollectionExtensions"/> class.
+    ///     Adds <see cref="RabbitMQMappedServer" /> to service collection as singleton and hosted service.
     /// </summary>
-    public static class ServiceCollectionExtensions
+    /// <param name="services">The service collection.</param>
+    /// <param name="config">The rabbitmq configuration.</param>
+    /// <param name="serializerOptions">The serializer options.</param>
+    /// <returns></returns>
+    [Obsolete(ObsoleDesc)]
+    public static IServiceCollection AddRabbitMQMappedServer(this IServiceCollection services,
+        RabbitMQConfiguration config, JsonSerializerSettings? serializerOptions = null)
     {
-        private const string obsoleDesc = $"It's better to use {nameof(RabbitMQSmartControllerBase)}. Method will be removed in future versions.";
-        /// <summary>
-        /// Adds <see cref="RabbitMQMappedServer"/> to service collection as singleton and hosted service.
-        /// </summary>
-        /// <param name="services">The service collection.</param>
-        /// <param name="config">The rabbitmq configuration.</param>
-        /// <param name="serializerOptions">The serializer options.</param>
-        /// <returns></returns>
-        [Obsolete(obsoleDesc)]
-        public static IServiceCollection AddRabbitMQMappedServer(this IServiceCollection services, RabbitMQConfiguration config, JsonSerializerSettings? serializerOptions = null)
-        {
-            ArgumentNullException.ThrowIfNull(config);
+        ArgumentNullException.ThrowIfNull(config);
 
-            services.AddSingleton<RabbitMQMappedServer>(sr =>
-            {
-                return new RabbitMQMappedServer(sr.GetService<ILogger<RabbitMQMappedServer>>()!, config, sr, serializerOptions);
-            });
-            return services.AddHostedService<RabbitMQMappedServer>(sr =>
-            {
-                return sr.GetService<RabbitMQMappedServer>()!;
-            });
-        }
-        /// <summary>
-        /// Adds <see cref="RabbitMQServer"/> to service collection as singleton and hosted service.
-        /// </summary>
-        /// <param name="services">The service collection.</param>
-        /// <param name="config">The rabbitmq configuration.</param>
-        /// <param name="receiverAction">The received action.</param>
-        /// <param name="serializerOptions">The serializer options.</param>
-        /// <returns></returns>
-        public static IServiceCollection AddRabbitMQServer(this IServiceCollection services, RabbitMQConfiguration config, AsyncEventHandler<BasicDeliverEventArgs> receiverAction, JsonSerializerSettings? serializerOptions = null)
+        services.AddSingleton<RabbitMQMappedServer>(sr =>
         {
-            ArgumentNullException.ThrowIfNull(config);
-
-            ArgumentNullException.ThrowIfNull(receiverAction);
-
-            services.AddSingleton<RabbitMQServer>(sr =>
-            {
-                return new RabbitMQServer(sr.GetService<ILogger<RabbitMQServer>>()!, config, receiverAction, serializerOptions);
-            });
-            return services.AddHostedService<RabbitMQServer>(sr =>
-            {
-                return sr.GetService<RabbitMQServer>()!;
-            });
-        }
-        /// <summary>
-        /// Adds a custom implementation of <see cref="RabbitMQServer"/>.
-        /// </summary>
-        /// <typeparam name="T">The <see cref="RabbitMQServer"/> implementation type.</typeparam>
-        /// <param name="services">The service collection.</param>
-        /// <param name="server">The rabbitmq server.</param>
-        /// <returns></returns>
-        public static IServiceCollection AddRabbitMQServer<T>(this IServiceCollection services, T server) where T : RabbitMQServer
+            return new RabbitMQMappedServer(sr.GetService<ILogger<RabbitMQMappedServer>>()!, config, sr,
+                serializerOptions);
+        });
+        return services.AddHostedService<RabbitMQMappedServer>(sr =>
         {
-            ArgumentNullException.ThrowIfNull(server);
+            return sr.GetService<RabbitMQMappedServer>()!;
+        });
+    }
 
-            services.AddSingleton<T>(server);
-            return services.AddHostedService<T>(sr =>
-            {
-                return sr.GetService<T>()!;
-            });
-        }
-        /// <summary>
-        /// Adds <see cref="RabbitMQClient"/> to service collection as signleton and hosted service.
-        /// </summary>
-        /// <param name="services">The service collection.</param>
-        /// <param name="config">The rabbitmq configuration.</param>
-        /// <param name="serializerOptions">The serializer options.</param>
-        /// <returns></returns>
-        public static IServiceCollection AddRabbitMQClient(this IServiceCollection services, RabbitMQConfiguration config, JsonSerializerSettings? serializerOptions = null)
-        {
-            ArgumentNullException.ThrowIfNull(config);
+    /// <summary>
+    ///     Adds <see cref="RabbitMQServer" /> to service collection as singleton and hosted service.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="config">The rabbitmq configuration.</param>
+    /// <param name="receiverAction">The received action.</param>
+    /// <param name="serializerOptions">The serializer options.</param>
+    /// <returns></returns>
+    public static IServiceCollection AddRabbitMQServer(this IServiceCollection services, RabbitMQConfiguration config,
+        AsyncEventHandler<BasicDeliverEventArgs> receiverAction, JsonSerializerSettings? serializerOptions = null)
+    {
+        ArgumentNullException.ThrowIfNull(config);
 
-            services.AddSingleton<RabbitMQClient>(sr =>
-            {
-                return new RabbitMQClient(sr.GetService<ILogger<RabbitMQClient>>()!, config, serializerOptions);
-            });
-            return services.AddHostedService<RabbitMQClient>(sr =>
-            {
-                return sr.GetService<RabbitMQClient>()!;
-            });
-        }
-        /// <summary>
-        /// Adds a custom implementation of <see cref="RabbitMQClient"/>.
-        /// </summary>
-        /// <typeparam name="T">The <see cref="RabbitMQClient"/> implementation type.</typeparam>
-        /// <param name="services">The services.</param>
-        /// <param name="client">The client.</param>
-        /// <returns></returns>
-        public static IServiceCollection AddRabbitMQClient<T>(this IServiceCollection services, T client) where T : RabbitMQClient
-        {
-            ArgumentNullException.ThrowIfNull(client);
+        ArgumentNullException.ThrowIfNull(receiverAction);
 
-            services.AddSingleton<T>(client);
-            return services.AddHostedService<T>(sr =>
-            {
-                return sr.GetService<T>()!;
-            });
-        }
-        /// <summary>
-        /// Adds a collection of the <see cref="RabbitMQControllerBase"/> instances to service collection as scoped.
-        /// </summary>
-        /// <param name="services">The service collection.</param>
-        /// <param name="controllers">The controllers.</param>
-        /// <returns></returns>
-        [Obsolete(obsoleDesc)]
-        public static IServiceCollection AddRabbitMQControllers(this IServiceCollection services, IEnumerable<RabbitMQControllerBase> controllers)
+        services.AddSingleton<RabbitMQServer>(sr =>
         {
-            ArgumentNullException.ThrowIfNull(controllers);
-            controllers.ToList().ForEach(l =>
-            {
-                services.AddScoped<RabbitMQControllerBase>(sp =>
-                {
-                    return l;
-                });
-            });
-            return services;
-        }
-        /// <summary>
-        /// Adds <see cref="RabbitMQControllerBase"/> to service collection as scoped.
-        /// </summary>
-        /// <typeparam name="T">The <see cref="RabbitMQControllerBase"/> representation type.</typeparam>
-        /// <param name="services">The service collection.</param>
-        /// <returns></returns>
-        [Obsolete(obsoleDesc)]
-        public static IServiceCollection AddRabbitMQController<T>(this IServiceCollection services) where T: RabbitMQControllerBase
-        {
-            return services.AddScoped<RabbitMQControllerBase, T>();
-        }
-        /// <summary>
-        /// Adds <see cref="RabbitMQSmartControllerBase"/> to service collection as hosted service.
-        /// </summary>
-        /// <typeparam name="T">The <see cref="RabbitMQSmartControllerBase"/> representation type.</typeparam>
-        /// <param name="services">The services.</param>
-        /// <param name="configuration">The configuration.</param>
-        /// <param name="gZipSettings">The gzip settings. Compress the response message.</param>
-        /// <param name="serializerOptions">The serializer options.</param>
-        /// <returns></returns>
-        public static IServiceCollection AddSmartRabbitMQController<T>(this IServiceCollection services, RabbitMQConfiguration configuration, GZipSettings? gZipSettings = null, JsonSerializerSettings? serializerOptions = null) where T : RabbitMQSmartControllerBase
-        {
-            return services.AddHostedService(sr =>
-            {
-                return RabbitMQSmartControllerBase.InitializeNewController<T>(configuration, sr, gZipSettings, serializerOptions);
-            });
-        }
+            return new RabbitMQServer(sr.GetService<ILogger<RabbitMQServer>>()!, config, receiverAction,
+                serializerOptions);
+        });
+        return services.AddHostedService<RabbitMQServer>(sr => { return sr.GetService<RabbitMQServer>()!; });
+    }
 
+    /// <summary>
+    ///     Adds a custom implementation of <see cref="RabbitMQServer" />.
+    /// </summary>
+    /// <typeparam name="T">The <see cref="RabbitMQServer" /> implementation type.</typeparam>
+    /// <param name="services">The service collection.</param>
+    /// <param name="server">The rabbitmq server.</param>
+    /// <returns></returns>
+    public static IServiceCollection AddRabbitMQServer<T>(this IServiceCollection services, T server)
+        where T : RabbitMQServer
+    {
+        ArgumentNullException.ThrowIfNull(server);
 
+        services.AddSingleton<T>(server);
+        return services.AddHostedService<T>(sr => { return sr.GetService<T>()!; });
+    }
+
+    /// <summary>
+    ///     Adds <see cref="RabbitMQClient" /> to service collection as signleton and hosted service.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="config">The rabbitmq configuration.</param>
+    /// <param name="serializerOptions">The serializer options.</param>
+    /// <returns></returns>
+    public static IServiceCollection AddRabbitMQClient(this IServiceCollection services, RabbitMQConfiguration config,
+        JsonSerializerSettings? serializerOptions = null)
+    {
+        ArgumentNullException.ThrowIfNull(config);
+
+        services.AddSingleton<RabbitMQClient>(sr =>
+        {
+            return new RabbitMQClient(sr.GetService<ILogger<RabbitMQClient>>()!, config, serializerOptions);
+        });
+        return services.AddHostedService<RabbitMQClient>(sr => { return sr.GetService<RabbitMQClient>()!; });
+    }
+
+    /// <summary>
+    ///     Adds a custom implementation of <see cref="RabbitMQClient" />.
+    /// </summary>
+    /// <typeparam name="T">The <see cref="RabbitMQClient" /> implementation type.</typeparam>
+    /// <param name="services">The services.</param>
+    /// <param name="client">The client.</param>
+    /// <returns></returns>
+    public static IServiceCollection AddRabbitMQClient<T>(this IServiceCollection services, T client)
+        where T : RabbitMQClient
+    {
+        ArgumentNullException.ThrowIfNull(client);
+
+        services.AddSingleton<T>(client);
+        return services.AddHostedService<T>(sr => { return sr.GetService<T>()!; });
+    }
+
+    /// <summary>
+    ///     Adds a collection of the <see cref="RabbitMQControllerBase" /> instances to service collection as scoped.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="controllers">The controllers.</param>
+    /// <returns></returns>
+    [Obsolete(ObsoleDesc)]
+    public static IServiceCollection AddRabbitMQControllers(this IServiceCollection services,
+        IEnumerable<RabbitMQControllerBase> controllers)
+    {
+        ArgumentNullException.ThrowIfNull(controllers);
+        controllers.ToList().ForEach(l => { services.AddScoped<RabbitMQControllerBase>(sp => { return l; }); });
+        return services;
+    }
+
+    /// <summary>
+    ///     Adds <see cref="RabbitMQControllerBase" /> to service collection as scoped.
+    /// </summary>
+    /// <typeparam name="T">The <see cref="RabbitMQControllerBase" /> representation type.</typeparam>
+    /// <param name="services">The service collection.</param>
+    /// <returns></returns>
+    [Obsolete(ObsoleDesc)]
+    public static IServiceCollection AddRabbitMQController<T>(this IServiceCollection services)
+        where T : RabbitMQControllerBase
+    {
+        return services.AddScoped<RabbitMQControllerBase, T>();
+    }
+
+    /// <summary>
+    ///     Adds <see cref="RabbitMQSmartControllerBase" /> to service collection as hosted service.
+    /// </summary>
+    /// <typeparam name="T">The <see cref="RabbitMQSmartControllerBase" /> representation type.</typeparam>
+    /// <param name="services">The services.</param>
+    /// <param name="configuration">The configuration.</param>
+    /// <param name="gZipSettings">The gzip settings. Compress the response message.</param>
+    /// <param name="serializerOptions">The serializer options.</param>
+    /// <returns></returns>
+    public static IServiceCollection AddSmartRabbitMQController<T>(this IServiceCollection services,
+        RabbitMQConfiguration configuration, GZipSettings? gZipSettings = null,
+        JsonSerializerSettings? serializerOptions = null) where T : RabbitMQSmartControllerBase
+    {
+        return services.AddHostedService(sr =>
+        {
+            return RabbitMQSmartControllerBase.InitializeNewController<T>(configuration, sr, gZipSettings,
+                serializerOptions);
+        });
     }
 }
