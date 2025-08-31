@@ -2,48 +2,52 @@
 using EBCEYS.RabbitMQ.Configuration;
 using EBCEYS.RabbitMQ.Server.MappedService.Data;
 using Microsoft.Extensions.Logging;
+using RabbitMQ.Client;
 
-namespace EBCEYS.RabbitMQ.ExampleClient
+namespace EBCEYS.RabbitMQ.ExampleClient;
+
+internal class Program
 {
-    internal class Program
+    private static RabbitMQConfigurationBuilder? _configBuilder;
+
+    private static readonly ILogger<RabbitMQClient> Logger = new Logger<RabbitMQClient>(LoggerFactory.Create(builder =>
     {
-        private static RabbitMQConfigurationBuilder? configBuilder;
-        private static readonly ILogger<RabbitMQClient> logger = new Logger<RabbitMQClient>(LoggerFactory.Create(builder =>
-        {
-            builder.AddConsole();
-        }));
-        static async Task Main()
-        {
-            configBuilder = new();
-            configBuilder.AddConnectionFactory(new()
-            {
-                HostName = "Kuznetsovy-Server",
-                UserName = "ebcey2",
-                Password = "123"
-            });
-            configBuilder.AddQueueConfiguration(new("ExampleQueue", autoDelete: true));
-            configBuilder.AddCallbackConfiguration(new(new("responseQueue"), TimeSpan.FromSeconds(10.0)));
+        builder.AddConsole();
+    }));
 
-            logger.LogInformation("Start rabbitMQ client!");
-            await RabbitMQClientProcess();
-        }
-        private static async Task RabbitMQClientProcess()
+    private static async Task Main()
+    {
+        _configBuilder = new RabbitMQConfigurationBuilder();
+        _configBuilder.AddConnectionFactory(new ConnectionFactory
         {
-            RabbitMQClient client = new(logger, configBuilder!.Build());
-            await client.StartAsync(CancellationToken.None);
+            HostName = "Kuznetsovy-Server",
+            UserName = "ebcey2",
+            Password = "123"
+        });
+        _configBuilder.AddQueueConfiguration(new QueueConfiguration("ExampleQueue", autoDelete: true));
+        _configBuilder.AddCallbackConfiguration(
+            new CallbackRabbitMQConfiguration(new QueueConfiguration("responseQueue"), TimeSpan.FromSeconds(10.0)));
 
-            while (true)
+        Logger.LogInformation("Start rabbitMQ client!");
+        await RabbitMQClientProcess();
+    }
+
+    private static async Task RabbitMQClientProcess()
+    {
+        RabbitMQClient client = new(Logger, _configBuilder!.Build());
+        await client.StartAsync(CancellationToken.None);
+
+        while (true)
+        {
+            RabbitMQRequestData request = new()
             {
-                RabbitMQRequestData request = new()
-                {
-                    Method = "ExampleMethod",
-                    Params = ["asd1", "asd2"]
-                };
-                logger.LogInformation("Request is {@request}", request);
-                string? result = await client.SendRequestAsync<string?>(request);
-                logger.LogInformation("Result is: {result}", result);
-                await Task.Delay(TimeSpan.FromSeconds(5));
-            }
+                Method = "ExampleMethod",
+                Params = ["asd1", "asd2"]
+            };
+            Logger.LogInformation("Request is {@request}", request);
+            var result = await client.SendRequestAsync<string?>(request);
+            Logger.LogInformation("Result is: {result}", result);
+            await Task.Delay(TimeSpan.FromSeconds(5));
         }
     }
 }
