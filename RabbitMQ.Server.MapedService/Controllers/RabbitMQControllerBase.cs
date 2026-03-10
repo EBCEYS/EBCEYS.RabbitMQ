@@ -44,7 +44,10 @@ public abstract class RabbitMQControllerBase : IDisposable, IRabbitMQControllerB
         SerializerOptions = serializerOptions;
         _request = new BaseRabbitMQRequest(eventArgs, SerializerOptions);
 
-        if (RabbitMQMethods is null) SetControllerMethods();
+        if (RabbitMQMethods is null)
+        {
+            SetControllerMethods();
+        }
 
         return FindMethod(_request.RequestData.Method);
     }
@@ -53,8 +56,11 @@ public abstract class RabbitMQControllerBase : IDisposable, IRabbitMQControllerB
     public MethodInfo? FindMethod(string? methodName)
     {
         if (string.IsNullOrWhiteSpace(methodName))
+        {
             throw new ArgumentException($"\"{nameof(methodName)}\" не может быть пустым или содержать только пробел.",
                 nameof(methodName));
+        }
+
         var method = RabbitMQMethods!.FirstOrDefault(m =>
             (m.GetCustomAttribute(typeof(RabbitMQMethod)) as RabbitMQMethod)?.Name == methodName);
         return method;
@@ -63,11 +69,19 @@ public abstract class RabbitMQControllerBase : IDisposable, IRabbitMQControllerB
     /// <inheritdoc />
     public async Task<object?> ProcessRequestWithResponseAsync(MethodInfo method)
     {
-        if (_request is null) throw new InvalidOperationException(nameof(_request) + " should be set!");
+        if (_request is null)
+        {
+            throw new InvalidOperationException(nameof(_request) + " should be set!");
+        }
+
         var methodArgs = method.GetParameters();
         if (_request!.RequestData.Params is null || _request.RequestData.Params.Length == 0)
         {
-            if (methodArgs.Length > 0) throw new Exception("Method has no arguments but request contains it!");
+            if (methodArgs.Length > 0)
+            {
+                throw new Exception("Method has no arguments but request contains it!");
+            }
+
             var t = (Task)method.Invoke(this, null)!;
             await t.ConfigureAwait(false);
             return ((dynamic)t).Result;
@@ -84,11 +98,19 @@ public abstract class RabbitMQControllerBase : IDisposable, IRabbitMQControllerB
     /// <inheritdoc />
     public async Task ProcessRequestAsync(MethodInfo method)
     {
-        if (_request is null) throw new InvalidOperationException(nameof(_request) + " should be set!");
+        if (_request is null)
+        {
+            throw new InvalidOperationException(nameof(_request) + " should be set!");
+        }
+
         var methodArgs = method.GetParameters();
         if (_request!.RequestData.Params is null || _request.RequestData.Params.Length == 0)
         {
-            if (methodArgs.Length > 0) throw new Exception("Method has no arguments but request contains it!");
+            if (methodArgs.Length > 0)
+            {
+                throw new Exception("Method has no arguments but request contains it!");
+            }
+
             await (Task)method.Invoke(this, null)!;
         }
         else
@@ -113,16 +135,26 @@ public abstract class RabbitMQControllerBase : IDisposable, IRabbitMQControllerB
     private object[] GetArgumentsForMethod(ParameterInfo[] methodArgs)
     {
         if (methodArgs.Length != _request!.RequestData.Params!.Length)
+        {
             throw new RabbitMQControllerException("Request and method arguments are not equeal!");
+        }
+
         List<object> arguments = [];
         for (var i = 0; i < methodArgs.Length; i++)
         {
             if (_request.RequestData.Params[i] is JObject)
-                _request.RequestData.Params[i] = JsonConvert.DeserializeObject(_request.RequestData.Params[i].ToString()!,
+            {
+                _request.RequestData.Params[i] = JsonConvert.DeserializeObject(
+                    _request.RequestData.Params[i].ToString()!,
                     methodArgs[i].ParameterType)!;
+            }
+
             if (_request.RequestData.Params[i] is JArray)
+            {
                 _request.RequestData.Params[i] =
                     JArray.Parse(_request.RequestData.Params[i].ToString()!)!.ToObject(methodArgs[i].ParameterType)!;
+            }
+
             arguments.Add(_request.RequestData.Params[i]);
         }
 

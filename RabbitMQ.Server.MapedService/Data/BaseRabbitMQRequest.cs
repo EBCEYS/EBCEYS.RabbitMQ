@@ -17,9 +17,10 @@ public sealed class BaseRabbitMQRequest
     /// <param name="eventArgs">The event args.</param>
     /// <param name="serializerOptions">The serializer options.</param>
     /// <param name="encoding">The encoding.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
     /// <exception cref="ArgumentNullException"></exception>
     public BaseRabbitMQRequest(BasicDeliverEventArgs eventArgs, JsonSerializerSettings? serializerOptions = null,
-        Encoding? encoding = default)
+        Encoding? encoding = null, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(eventArgs);
 
@@ -36,6 +37,7 @@ public sealed class BaseRabbitMQRequest
         var data = JsonConvert.DeserializeObject<RabbitMQRequestData?>(json, serializerOptions);
         ArgumentNullException.ThrowIfNull(data);
         RequestData = data;
+        CancellationToken = cancellationToken;
     }
 
     /// <summary>
@@ -47,6 +49,11 @@ public sealed class BaseRabbitMQRequest
     ///     Indicates the message compression.
     /// </summary>
     public ReceivedMessageCompression MessageCompression { get; } = ReceivedMessageCompression.NoCompression;
+
+    /// <summary>
+    ///     The cancellation token.
+    /// </summary>
+    public CancellationToken CancellationToken { get; }
 }
 
 /// <summary>

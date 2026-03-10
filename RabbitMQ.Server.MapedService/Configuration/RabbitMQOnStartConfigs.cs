@@ -18,9 +18,18 @@ public class RabbitMQOnStartConfigs
         get => _connectionRetries;
         set
         {
-            if (value > 100) _connectionRetries = 100;
-            else if (value == 0) _connectionRetries = 1;
-            else _connectionRetries = value;
+            if (value > 100)
+            {
+                _connectionRetries = 100;
+            }
+            else if (value == 0)
+            {
+                _connectionRetries = 1;
+            }
+            else
+            {
+                _connectionRetries = value;
+            }
         }
     }
 
@@ -35,9 +44,13 @@ public class RabbitMQOnStartConfigs
         set
         {
             if (value < TimeSpan.FromSeconds(0.1))
+            {
                 _delayBeforeRetries = TimeSpan.FromSeconds(1.0);
+            }
             else
+            {
                 _delayBeforeRetries = value;
+            }
         }
     }
 

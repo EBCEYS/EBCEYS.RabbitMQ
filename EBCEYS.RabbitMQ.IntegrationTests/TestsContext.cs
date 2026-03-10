@@ -13,9 +13,6 @@ public class TestsContext
 {
     public const string ExchangeName = "TestExchange";
     public const string QueueName = "TestQueue";
-
-    private RabbitMqContainer _rabbitMqContainer;
-    private TestServerApplicationFactory _factory;
     private const string Username = "user";
     private const string Password = "password";
     private const string Hostname = "rabbitmq-tests";
@@ -23,6 +20,9 @@ public class TestsContext
     private static readonly int ExternalPort = Random.Shared.Next(6000, 7000);
 
     public static readonly ConcurrentDictionary<string, TaskCompletionSource<string>> Tasks = new();
+    private TestServerApplicationFactory _factory;
+
+    private RabbitMqContainer _rabbitMqContainer;
 
     [OneTimeSetUp]
     public async Task OneTimeSetUp()

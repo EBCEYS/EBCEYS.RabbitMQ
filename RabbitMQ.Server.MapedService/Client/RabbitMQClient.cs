@@ -22,16 +22,17 @@ public class RabbitMQClient : IRabbitMQClient
 {
     private const string ContentType = "application-json";
 
+
+    private static readonly ConcurrentDictionary<string, TaskCompletionSource<RabbitMQClientResponse>>
+        ResponseDictionary =
+            new();
+
     private readonly bool _autoAck = true;
     private readonly RabbitMQConfiguration _configuration;
     private readonly Encoding _encoding;
 
     private readonly ILogger _logger;
     private readonly TimeSpan? _requestsTimeout;
-
-
-    private static readonly ConcurrentDictionary<string, TaskCompletionSource<RabbitMQClientResponse>> ResponseDictionary =
-        new();
 
     private readonly JsonSerializerSettings? _serializerOptions;
     private IChannel? _channel;
@@ -133,7 +134,11 @@ public class RabbitMQClient : IRabbitMQClient
     /// <inheritdoc />
     public async Task StopAsync(CancellationToken cancellationToken)
     {
-        if (_connection is null) return;
+        if (_connection is null)
+        {
+            return;
+        }
+
         try
         {
             await _connection.CloseAsync(cancellationToken);
@@ -155,7 +160,11 @@ public class RabbitMQClient : IRabbitMQClient
     public virtual async Task SendMessageAsync(RabbitMQRequestData data, bool mandatory = false,
         CancellationToken token = default)
     {
-        if (!_connection!.IsOpen || !_channel!.IsOpen) throw new RabbitMQClientException("Connection is not opened!");
+        if (!_connection!.IsOpen || !_channel!.IsOpen)
+        {
+            throw new RabbitMQClientException("Connection is not opened!");
+        }
+
         var json = JsonConvert.SerializeObject(data, _serializerOptions);
         var msg = _encoding.GetBytes(json);
 
@@ -176,22 +185,33 @@ public class RabbitMQClient : IRabbitMQClient
     /// <returns>Response data or default if timeout.</returns>
     /// <exception cref="RabbitMQClientException"></exception>
     /// <exception cref="RabbitMQRequestProcessingException"></exception>
+    /// <exception cref="OperationCanceledException"></exception>
     public virtual async Task<T?> SendRequestAsync<T>(RabbitMQRequestData data, bool mandatory = false,
         CancellationToken token = default)
     {
-        if (!_connection!.IsOpen || !_channel!.IsOpen) throw new RabbitMQClientException("Connection is not opened!");
-        if (_requestsTimeout is null) throw new RabbitMQClientException("Can not send request! Timeout is not exists!");
+        if (!_connection!.IsOpen || !_channel!.IsOpen)
+        {
+            throw new RabbitMQClientException("Connection is not opened!");
+        }
+
+        if (_requestsTimeout is null)
+        {
+            throw new RabbitMQClientException("Can not send request! Timeout is not exists!");
+        }
+
         var json = JsonConvert.SerializeObject(data, _serializerOptions);
         var msg = _encoding.GetBytes(json);
         _logger.LogDebug("Try to send request {msg}", json);
 
         var props = GetRpcProps();
 
+        using var loggerScope = _logger.BeginScope("CorrelationId: {correlationId}", props.CorrelationId);
+
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(token);
         cts.CancelAfter(_requestsTimeout.Value);
-        
+
         var tcs = new TaskCompletionSource<RabbitMQClientResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
-        
+
         cts.Token.Register(() => tcs.TrySetCanceled());
 
         var exchange = _configuration.ExchangeConfiguration?.ExchangeName ?? string.Empty;
@@ -205,9 +225,11 @@ public class RabbitMQClient : IRabbitMQClient
             var response = await tcs.Task;
 
             if (response.RequestProcessingException != null)
+            {
                 return _configuration.OnStartConfigs.ThrowServerExceptionsOnReceivingResponse
                     ? throw response.RequestProcessingException
                     : default;
+            }
 
             if (response.Response is null)
             {
@@ -217,7 +239,7 @@ public class RabbitMQClient : IRabbitMQClient
 
             try
             {
-                return JsonConvert.DeserializeObject<T?>(response.Response, _serializerOptions);
+                return JsonConvert.DeserializeObject<T>(response.Response, _serializerOptions);
             }
             catch (Exception ex)
             {
@@ -227,15 +249,13 @@ public class RabbitMQClient : IRabbitMQClient
         }
         catch (OperationCanceledException ex)
         {
-            Console.WriteLine(ex);
+            _logger.LogWarning(ex, "Request timed out");
+            throw;
         }
         finally
         {
             ResponseDictionary.TryRemove(props.CorrelationId!, out _);
         }
-
-        _logger.LogError("Response on request {requestId} is timeout!", props.CorrelationId!);
-        return default;
     }
 
     /// <inheritdoc />
@@ -260,7 +280,11 @@ public class RabbitMQClient : IRabbitMQClient
     {
         try
         {
-            if (_connection is not null) await _connection.CloseAsync();
+            if (_connection is not null)
+            {
+                await _connection.CloseAsync();
+            }
+
             _connection?.Dispose();
             _channel?.Dispose();
         }
@@ -283,12 +307,18 @@ public class RabbitMQClient : IRabbitMQClient
         }));
         _logger.LogTrace("Get rabbit response: {encodedMessage} {id}", body, ea.BasicProperties.CorrelationId);
         if (ResponseDictionary.TryGetValue(ea.BasicProperties.CorrelationId ?? "", out var value))
+        {
             value.TrySetResult(new RabbitMQClientResponse
             {
                 Response = body,
                 RequestProcessingException = RabbitMQRequestProcessingException.CreateFromDto(exObject)
             });
-        if (!_autoAck) await _channel!.BasicAckAsync(ea.DeliveryTag, false);
+        }
+
+        if (!_autoAck)
+        {
+            await _channel!.BasicAckAsync(ea.DeliveryTag, false);
+        }
     }
 
     private RabbitMQRequestProcessingExceptionDto? GetExceptionHeader(BasicDeliverEventArgs ea)
@@ -303,7 +333,10 @@ public class RabbitMQClient : IRabbitMQClient
         try
         {
             var resultString = ea.BasicProperties.Headers?.GetHeaderString(headerKey, _encoding);
-            if (resultString != null) result = JsonConvert.DeserializeObject<T?>(resultString, _serializerOptions);
+            if (resultString != null)
+            {
+                result = JsonConvert.DeserializeObject<T?>(resultString, _serializerOptions);
+            }
         }
         catch (Exception ex)
         {
@@ -317,8 +350,12 @@ public class RabbitMQClient : IRabbitMQClient
         GZipSettings? gziped, BasicProperties props, CancellationToken token = default)
     {
         if (gziped?.GZiped ?? false)
+        {
             props.Headers?.Add(RabbitMQServer.GZipSettingsResponseHeaderKey, new byte[] { 1 });
-        await _channel!.BasicPublishAsync(exchange, routingKey, mandatory, props, GZipSettings.GZipCompress(msg, gziped),
+        }
+
+        await _channel!.BasicPublishAsync(exchange, routingKey, mandatory, props,
+            GZipSettings.GZipCompress(msg, gziped),
             token);
     }
 

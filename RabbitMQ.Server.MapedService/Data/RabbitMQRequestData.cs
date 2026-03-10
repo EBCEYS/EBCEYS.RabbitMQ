@@ -59,7 +59,11 @@ public struct GZipSettings(bool gZiped = false, CompressionLevel compLevel = Com
     /// <returns>Compresed message if <see cref="GZiped" /> set <c>true</c>; otherwise <paramref name="input" />.</returns>
     public static byte[] GZipCompress(byte[] input, GZipSettings? settings)
     {
-        if (settings is null || !settings.Value.GZiped) return input;
+        if (settings is null || !settings.Value.GZiped)
+        {
+            return input;
+        }
+
         using MemoryStream result = new();
         var lengthBytes = BitConverter.GetBytes(input.Length);
         result.Write(lengthBytes, 0, 4);
@@ -81,7 +85,11 @@ public struct GZipSettings(bool gZiped = false, CompressionLevel compLevel = Com
     /// <returns>Decompresed message if <see cref="GZiped" /> set <c>true</c>; otherwise <paramref name="input" />.</returns>
     public static byte[] GZipDecompress(byte[] input, GZipSettings? settings)
     {
-        if (settings is null || !settings.Value.GZiped) return input;
+        if (settings is null || !settings.Value.GZiped)
+        {
+            return input;
+        }
+
         using MemoryStream source = new(input);
         var lengthBytes = new byte[4];
         source.Read(lengthBytes, 0, 4);

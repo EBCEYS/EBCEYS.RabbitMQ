@@ -15,7 +15,9 @@ internal static class AmqpHeadersExtensios
         try
         {
             if (headers.TryGetValue(key, out var value) && value != null)
+            {
                 return (byte[]?)Convert.ChangeType(value, typeof(byte[])) ?? [];
+            }
         }
         catch (InvalidCastException)
         {
@@ -38,7 +40,11 @@ internal static class AmqpHeadersExtensios
     internal static string? GetHeaderString(this IDictionary<string, object?> headers, string key, Encoding encoding)
     {
         var value = headers.GetHeaderBytes(key);
-        if (value is null) return null;
+        if (value is null)
+        {
+            return null;
+        }
+
         return encoding.GetString(value);
     }
 }

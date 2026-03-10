@@ -22,7 +22,10 @@ public class CallbackRabbitMQConfiguration
         ExchangeConfiguration? exchangeConfig = null)
     {
         if (requestsTimeout <= TimeSpan.Zero)
+        {
             throw new ArgumentOutOfRangeException(nameof(requestsTimeout), "Timeout shoud be more than zero timespan!");
+        }
+
         ExchangeConfiguration = exchangeConfig;
         RequestsTimeout = requestsTimeout;
         QueueConfiguration = queueConfig;

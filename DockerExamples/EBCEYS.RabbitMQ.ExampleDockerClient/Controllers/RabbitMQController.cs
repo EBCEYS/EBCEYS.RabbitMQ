@@ -37,16 +37,23 @@ public class RabbitMQController(
     [HttpPost("messages/{count}")]
     public async Task<IActionResult> SendTestMessages([Required] [FromRoute] uint count)
     {
-        if (count <= 0) return BadRequest("Count should be more than 0!");
+        if (count <= 0)
+        {
+            return BadRequest("Count should be more than 0!");
+        }
+
         try
         {
             List<Task> tasks = [];
             for (var i = 0; i < count; i++)
+            {
                 tasks.Add(client.SendMessageAsync(new RabbitMQRequestData
                 {
                     Method = "TestMethodMessage",
                     Params = [i, i + 1]
                 }, false, HttpContext.RequestAborted));
+            }
+
             await Task.WhenAll(tasks);
             return Ok();
         }
@@ -98,16 +105,23 @@ public class RabbitMQController(
     [HttpPost("requests/{count}")]
     public async Task<IActionResult> SendTestRequests([Required] [FromRoute] uint count)
     {
-        if (count <= 0) return BadRequest("Count should be more than 0!");
+        if (count <= 0)
+        {
+            return BadRequest("Count should be more than 0!");
+        }
+
         try
         {
             List<Task<int>> tasks = [];
             for (var i = 0; i < count; i++)
+            {
                 tasks.Add(client.SendRequestAsync<int>(new RabbitMQRequestData
                 {
                     Method = "TestMethodRequest",
                     Params = [i, i + 1]
                 }, false, HttpContext.RequestAborted));
+            }
+
             var results = await Task.WhenAll(tasks);
             return Ok(results);
         }
@@ -121,16 +135,23 @@ public class RabbitMQController(
     [HttpPost("requests/without/response/{count}")]
     public async Task<IActionResult> SendTestRequestsWithoutResponse([Required] [FromRoute] ulong count)
     {
-        if (count <= 0) return BadRequest("Count should be more than 0!");
+        if (count <= 0)
+        {
+            return BadRequest("Count should be more than 0!");
+        }
+
         try
         {
             List<Task<long>> tasks = [];
             for (ulong i = 0; i < count; i++)
+            {
                 tasks.Add(client.SendRequestAsync<long>(new RabbitMQRequestData
                 {
                     Method = "TestMethodRequest",
                     Params = [i, i + 1]
                 }, false, HttpContext.RequestAborted));
+            }
+
             await Task.WhenAll(tasks);
             return Ok();
         }

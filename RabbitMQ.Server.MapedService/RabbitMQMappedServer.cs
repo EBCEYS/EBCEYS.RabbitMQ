@@ -35,8 +35,8 @@ public class RabbitMQMappedServer : IHostedService, IAsyncDisposable, IDisposabl
 
         ArgumentNullException.ThrowIfNull(serviceProvider);
 
-        this._logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        this._serviceProvider = serviceProvider;
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _serviceProvider = serviceProvider;
         Server = new RabbitMQServer(serviceProvider.GetService<ILogger<RabbitMQServer>>()!, config, ConsumerAction,
             serializerOptions);
 
@@ -84,7 +84,11 @@ public class RabbitMQMappedServer : IHostedService, IAsyncDisposable, IDisposabl
             foreach (var c in ctrls)
             {
                 var method = c.GetMethodToExecute(args, Server.SerializerOptions);
-                if (method is null) continue;
+                if (method is null)
+                {
+                    continue;
+                }
+
                 var returnParam = method.ReturnParameter;
                 if (returnParam.ParameterType == typeof(Task) || returnParam.ParameterType == typeof(void))
                 {

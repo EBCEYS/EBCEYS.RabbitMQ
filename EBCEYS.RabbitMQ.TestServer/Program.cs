@@ -38,6 +38,8 @@ public class Startup(IConfiguration configuration)
             DelayBeforeRetries = TimeSpan.FromSeconds(1),
             ThrowServerExceptionsOnReceivingResponse = false
         });
+        services.AddSingleton<IMyCustomService, MyCustomService>();
+        services.AddKeyedSingleton<IMyCustomKeyedService, MyCustomKeyedService>(typeof(Program));
 
         services.AddSmartRabbitMQController<RabbitMQTestController>(configBuilder.Build());
     }

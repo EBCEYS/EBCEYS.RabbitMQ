@@ -26,10 +26,10 @@ public class QueueConfiguration
     public QueueConfiguration(string queueName, string? routingKey = null, bool durable = false, bool exclusive = false,
         bool autoDelete = false, IDictionary<string, object?>? arguments = null, bool noWait = false)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(queueName, nameof(queueName));
+        ArgumentException.ThrowIfNullOrWhiteSpace(queueName);
 
         QueueName = queueName;
-        this._routingKey = routingKey ?? queueName;
+        _routingKey = routingKey ?? queueName;
         Durable = durable;
         Exclusive = exclusive;
         AutoDelete = autoDelete;

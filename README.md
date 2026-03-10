@@ -112,6 +112,14 @@ host.Run();
 
 ## Изменения
 
+### v1.7.0
+
+1. Dotnet 10.
+2. Добавлены RabbitMqFromServiceAttribute && RabbitMqFromKeyedServiceAttribute атрибуты параметров метода RabbitMqMethodAttribute. **ВАЖНО!** располагать их следует последними или перед CancellationToken.
+3. Добавлено пробрасывание CancellationToken в методы RabbitMqMethod
+4. Добавлены Middlewares `protected virtual void SetMiddlewares(RabbitMqControllerMiddlewaresCollection middlewares)`. Middlewares вызываются перед началом обработки сообщения.
+5. Добавлены `protected virtual IEnumerable<CustomParameterProcessingOptions> CustomParametersProcessing;` для парсинга параметров метода из пришедшего сообщения, необработанных библиотекой.
+
 ### v1.5.1
 
 1. Передача заголовка о наличии компрессии в сообщениях от клиента

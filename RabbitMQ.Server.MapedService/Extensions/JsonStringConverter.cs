@@ -13,7 +13,10 @@ internal class JsonStringConverter : JsonConverter<string>
             return stringValue.ToString();
         }
 
-        if (reader.TokenType == JsonTokenType.String) return reader.GetString()!;
+        if (reader.TokenType == JsonTokenType.String)
+        {
+            return reader.GetString()!;
+        }
 
         throw new JsonException();
     }

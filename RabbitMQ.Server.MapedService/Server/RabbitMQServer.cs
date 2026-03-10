@@ -9,6 +9,8 @@ using Newtonsoft.Json;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
+// ReSharper disable CheckNamespace
+
 #pragma warning disable IDE0130 // Пространство имен (namespace) не соответствует структуре папок.
 namespace EBCEYS.RabbitMQ.Server.Service;
 #pragma warning restore IDE0130 // Пространство имен (namespace) не соответствует структуре папок.
@@ -52,14 +54,14 @@ public class RabbitMQServer : IHostedService, IAsyncDisposable, IDisposable
         AsyncEventHandler<BasicDeliverEventArgs>? consumerAction = null,
         JsonSerializerSettings? serializerOptions = null)
     {
-        this._configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        this._consumerAction = consumerAction;
+        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _consumerAction = consumerAction;
         SerializerOptions = serializerOptions;
-        this._logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-        _encoding = this._configuration.Encoding;
+        _encoding = _configuration.Encoding;
 
-        this._logger.LogDebug("Create rabbitMQ server service!");
+        _logger.LogDebug("Create rabbitMQ server service!");
     }
 
     /// <summary>
@@ -104,7 +106,7 @@ public class RabbitMQServer : IHostedService, IAsyncDisposable, IDisposable
 
             _channel?.Dispose();
         }
-        catch(Exception)
+        catch (Exception)
         {
             // ignored
         }
@@ -116,7 +118,9 @@ public class RabbitMQServer : IHostedService, IAsyncDisposable, IDisposable
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         if (_configuration.QueueConfiguration is null)
+        {
             throw new InvalidOperationException($"{nameof(_configuration.QueueConfiguration)} is null!");
+        }
 
         _connection =
             await _configuration.Factory.CreateConnectionAsync(_configuration.OnStartConfigs, null, cancellationToken);
@@ -144,7 +148,11 @@ public class RabbitMQServer : IHostedService, IAsyncDisposable, IDisposable
     /// <inheritdoc />
     public async Task StopAsync(CancellationToken cancellationToken)
     {
-        if (_connection is null) return;
+        if (_connection is null)
+        {
+            return;
+        }
+
         try
         {
             await _connection.CloseAsync(cancellationToken);
@@ -163,7 +171,7 @@ public class RabbitMQServer : IHostedService, IAsyncDisposable, IDisposable
     public void SetConsumerAction(AsyncEventHandler<BasicDeliverEventArgs> consumerAction)
     {
         ArgumentNullException.ThrowIfNull(consumerAction);
-        this._consumerAction = consumerAction;
+        _consumerAction = consumerAction;
         _logger.LogDebug("Set consumer action!");
     }
 
@@ -201,7 +209,10 @@ public class RabbitMQServer : IHostedService, IAsyncDisposable, IDisposable
         ArgumentNullException.ThrowIfNull(ea);
 
         if (ea.BasicProperties.ReplyToAddress is null)
+        {
             throw new InvalidOperationException("Event args do not contains ReplyTo params!");
+        }
+
         try
         {
             var json = JsonConvert.SerializeObject(response, SerializerOptions);
@@ -251,7 +262,10 @@ public class RabbitMQServer : IHostedService, IAsyncDisposable, IDisposable
         ArgumentNullException.ThrowIfNull(processingException);
 
         if (ea.BasicProperties.ReplyToAddress is null)
+        {
             throw new InvalidOperationException("Event args do not contains ReplyTo params!");
+        }
+
         try
         {
             var obj = processingException.GetDto();

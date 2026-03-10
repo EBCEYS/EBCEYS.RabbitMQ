@@ -9,8 +9,8 @@ internal class ExampleController : RabbitMQControllerBase
 
     public ExampleController(ILogger<ExampleController> logger)
     {
-        this._logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        this._logger.LogInformation("Create {name}", typeof(ExampleController).Name);
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _logger.LogInformation("Create {name}", typeof(ExampleController).Name);
     }
 
     [RabbitMQMethod("ExampleMethod")]

@@ -25,7 +25,7 @@ public sealed class RabbitMQConfigurationBuilder
     public RabbitMQConfigurationBuilder AddConnectionFactory(ConnectionFactory factory)
     {
         ArgumentNullException.ThrowIfNull(factory);
-        this._factory = factory;
+        _factory = factory;
         return this;
     }
 
@@ -38,7 +38,7 @@ public sealed class RabbitMQConfigurationBuilder
     {
         ArgumentNullException.ThrowIfNull(queueConfiguration);
 
-        this._queueConfiguration = queueConfiguration;
+        _queueConfiguration = queueConfiguration;
         return this;
     }
 
@@ -51,7 +51,7 @@ public sealed class RabbitMQConfigurationBuilder
     {
         ArgumentNullException.ThrowIfNull(exchangeConfiguration);
 
-        this._exchangeConfiguration = exchangeConfiguration;
+        _exchangeConfiguration = exchangeConfiguration;
         return this;
     }
 
@@ -76,7 +76,7 @@ public sealed class RabbitMQConfigurationBuilder
     public RabbitMQConfigurationBuilder AddCreateChannelOptions(CreateChannelOptions createChannelOptions)
     {
         ArgumentNullException.ThrowIfNull(createChannelOptions);
-        this._createChannelOptions = createChannelOptions;
+        _createChannelOptions = createChannelOptions;
         return this;
     }
 
@@ -88,7 +88,7 @@ public sealed class RabbitMQConfigurationBuilder
     public RabbitMQConfigurationBuilder AddQoSConfiguration(QoSConfiguration qoSConfiguration)
     {
         ArgumentNullException.ThrowIfNull(qoSConfiguration);
-        this._qoSConfiguration = qoSConfiguration;
+        _qoSConfiguration = qoSConfiguration;
         return this;
     }
 
@@ -100,7 +100,7 @@ public sealed class RabbitMQConfigurationBuilder
     public RabbitMQConfigurationBuilder AddEncoding(Encoding encoding)
     {
         ArgumentNullException.ThrowIfNull(encoding);
-        this._encoding = encoding;
+        _encoding = encoding;
         return this;
     }
 
@@ -112,7 +112,7 @@ public sealed class RabbitMQConfigurationBuilder
     public RabbitMQConfigurationBuilder AddOnStartConfiguration(RabbitMQOnStartConfigs onStartConfigs)
     {
         ArgumentNullException.ThrowIfNull(onStartConfigs);
-        this._onStartConfigs = onStartConfigs;
+        _onStartConfigs = onStartConfigs;
         return this;
     }
 
@@ -125,8 +125,16 @@ public sealed class RabbitMQConfigurationBuilder
     /// <exception cref="ArgumentNullException"></exception>
     public RabbitMQConfiguration Build()
     {
-        if (_factory is null) throw new ArgumentNullException(nameof(_factory));
-        if (_queueConfiguration is null) throw new ArgumentNullException(nameof(_queueConfiguration));
+        if (_factory is null)
+        {
+            throw new ArgumentNullException(nameof(_factory));
+        }
+
+        if (_queueConfiguration is null)
+        {
+            throw new ArgumentNullException(nameof(_queueConfiguration));
+        }
+
         return new RabbitMQConfiguration(
             _factory,
             _queueConfiguration,
